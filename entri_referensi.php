@@ -26,13 +26,12 @@ if (isset($_SESSION['username'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        
-
-               body {
+        body {
             font-family: 'Roboto', sans-serif;
             background-color: #f1f5f9;
             overflow-x: hidden;
         }
+
         .sidebar {
             height: 100vh;
             width: 280px;
@@ -44,15 +43,17 @@ if (isset($_SESSION['username'])) {
             transition: transform 0.3s ease;
             transform: translateX(0);
         }
+
         .sidebar.closed {
             transform: translateX(-100%);
         }
-.sidebar h3 {
-    text-align: center;
-    margin-top: 80px; /* Tambahkan margin atas untuk menghindari tombol menu */
-    margin-bottom: 40px;
-    color: #17a2b8;
-}
+
+        .sidebar h3 {
+            text-align: center;
+            margin-top: 80px; /* To add space for menu button */
+            margin-bottom: 40px;
+            color: #17a2b8;
+        }
 
         .sidebar a {
             display: flex;
@@ -64,21 +65,26 @@ if (isset($_SESSION['username'])) {
             border-radius: 5px;
             transition: background 0.3s ease, color 0.3s ease;
         }
+
         .sidebar a:hover {
             background: #17a2b8;
             color: #fff;
         }
+
         .sidebar a i {
             margin-right: 10px;
         }
+
         .content {
             margin-left: 300px;
             padding: 20px;
             transition: margin-left 0.3s ease;
         }
+
         .content.shifted {
             margin-left: 20px;
         }
+
         .toggle-btn {
             position: fixed;
             top: 20px;
@@ -92,6 +98,7 @@ if (isset($_SESSION['username'])) {
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
+
 
         /* Content Styles */
         .content {
@@ -143,17 +150,47 @@ if (isset($_SESSION['username'])) {
 </head>
 <body>
 <body>
-    <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
-    <div class="sidebar" id="sidebar">
-        <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
+  <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+  <div class="sidebar" id="sidebar">
+      <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
+      <ul>
+    <?php
+    if ($user['id_level'] == 1) { // Owner
+    ?>
         <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
         <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
         <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
         <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
         <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
+    <?php
+    } elseif ($user['id_level'] == 2) { // Level 2
+    ?>
+        <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+        <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+        <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+    <?php
+    } elseif ($user['id_level'] == 3) { // Level 3
+    ?>
+        <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+        <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+        <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+    <?php
+    } elseif ($user['id_level'] == 4) { // Level 4
+    ?>
+        <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+        <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+    <?php
+    } elseif ($user['id_level'] == 5) { // Level 5
+    ?>
+        <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+        <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+    <?php
+    }
+    ?>
+    <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</ul>
 
+  </div>
     <!-- Content -->
     <div class="content">
         <h1 class="text-center mb-4">Referensi Makanan</h1>

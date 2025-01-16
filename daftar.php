@@ -44,13 +44,12 @@ session_start();
         }
         .form-group input, .form-group select {
             border: 2px solid #cce7ff;
-            color: purple; /* Sesuaikan dengan warna teks yang diinginkan */
+            color: purple;
             border-radius: 50px;
             padding: 15px;
             font-size: 16px;
             width: 100%;
         }
-        
         .form-group input:focus, .form-group select:focus {
             border-color: #6a11cb;
             outline: none;
@@ -113,10 +112,10 @@ session_start();
             <button type='submit' name='kirim_daftar' class='btn btn-custom'><i class='icon icon-save'></i>&nbsp; CREATE ACCOUNT</button>
             <?php
             if (isset($_POST['kirim_daftar'])) {
-                $nama_user = $_POST['nama_user'];
-                $username = $_POST['username'];
-                $password = $_POST['password'];
-                $id_level = $_POST['id_level'];
+                $nama_user = mysqli_real_escape_string($conn, $_POST['nama_user']);
+                $username = mysqli_real_escape_string($conn, $_POST['username']);
+                $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Hash password
+                $id_level = mysqli_real_escape_string($conn, $_POST['id_level']);
                 $status = 'nonaktif';
 
                 $query_daftar = "INSERT INTO user (username, password, nama_user, id_level, status) VALUES ('$username', '$password', '$nama_user', '$id_level', '$status')";
