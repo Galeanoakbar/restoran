@@ -127,7 +127,6 @@ if (isset($_SESSION['username'])) {
         <?php
         } elseif ($r['id_level'] == 5) { // Level 5
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
         <?php
         }
@@ -136,7 +135,7 @@ if (isset($_SESSION['username'])) {
     </ul>
 </div>
 
-
+    <br><br><br>
     <div class="content" id="content">
         <?php if ($r['id_level'] >= 1 && $r['id_level'] <= 4): ?>
             <div class="card">

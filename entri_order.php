@@ -41,54 +41,7 @@ if(isset ($_SESSION['username'])){
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,800' rel='stylesheet' type='text/css'>
 </head>
 <body>
-<br>
-<!--sidebar-menu-->
-<div id="sidebar"><a href="entri_order.php" class="visible-phone"><i class="icon shopping-cart"></i> <span>Entri Order</span></a>
-  <ul>
-    <?php
-    if($r['id_level'] == 1){
-  ?>
-    <li> <a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_referensi.php"><i class="icon icon-tasks"></i> <span>Entri Referensi</span></a> </li>
-    <li class="active"> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="entri_transaksi.php"><i class="icon icon-inbox"></i> <span>Entri Transaksi</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 2){
-  ?>
-    <li><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li class="active"> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 3){
-  ?>
-    <li><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_transaksi.php"><i class="icon icon-inbox"></i> <span>Entri Transaksi</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 4){
-  ?>
-    <li><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 5){
-  ?>
-    <li><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li class="active"> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    }
-  ?>
-  </ul>
-</div>
-<!--sidebar-menu-->
 
-<!--main-container-part-->
-<div id="content">
 <!--breadcrumbs-->
   <div id="content-header">
     <div id="breadcrumb"> <a href="entri_order.php" title="Go to here" class="tip-bottom"><i class="icon icon-tasks"></i> Entri Order</a></div>
@@ -464,27 +417,7 @@ if(isset ($_SESSION['username'])){
   }
 </script>
 
-<script src="template/dashboard/js/excanvas.min.js"></script> 
-<script src="template/dashboard/js/jquery.min.js"></script> 
-<script src="template/dashboard/js/jquery.ui.custom.js"></script> 
-<script src="template/dashboard/js/bootstrap.min.js"></script> 
-<script src="template/dashboard/js/jquery.flot.min.js"></script> 
-<script src="template/dashboard/js/jquery.flot.resize.min.js"></script> 
-<script src="template/dashboard/js/jquery.peity.min.js"></script> 
-<script src="template/dashboard/js/fullcalendar.min.js"></script> 
-<script src="template/dashboard/js/matrix.js"></script> 
-<script src="template/dashboard/js/matrix.dashboard.js"></script> 
-<script src="template/dashboard/js/jquery.gritter.min.js"></script> 
-<script src="template/dashboard/js/matrix.interface.js"></script> 
-<script src="template/dashboard/js/matrix.chat.js"></script> 
-<script src="template/dashboard/js/jquery.validate.js"></script> 
-<script src="template/dashboard/js/matrix.form_validation.js"></script> 
-<script src="template/dashboard/js/jquery.wizard.js"></script> 
-<script src="template/dashboard/js/jquery.uniform.js"></script> 
-<script src="template/dashboard/js/select2.min.js"></script> 
-<script src="template/dashboard/js/matrix.popover.js"></script> 
-<script src="template/dashboard/js/jquery.dataTables.min.js"></script> 
-<script src="template/dashboard/js/matrix.tables.js"></script> 
+> 
 
 <script type="text/javascript">
   // This function is called from the pop-up menus to transfer to

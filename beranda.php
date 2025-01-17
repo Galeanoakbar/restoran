@@ -1,473 +1,296 @@
-<!DOCTYPE html>
-
 <?php
 include "connection/koneksi.php";
 session_start();
 ob_start();
 
+if (!isset($_SESSION['username'])) {
+    header('location: logout.php');
+    exit;
+}
+
 $id = $_SESSION['id_user'];
+$query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
+$sql = mysqli_query($conn, $query);
+$r = mysqli_fetch_array($sql);
 
-if(isset ($_SESSION['username'])){
-  
-  $query = "select * from user natural join level where id_user = $id";
+$levels = [
+    1 => "Administrator",
+    2 => "Waiter",
+    3 => "Kasir",
+    4 => "Owner",
+    5 => "Pelanggan"
+];
 
-  mysqli_query($conn, $query);
-  $sql = mysqli_query($conn, $query);
-
-  //Jumlah Administrator
-  $query_jml_adm = "select count(*) AS jumlah_adm from user natural join level where id_level = 1 and status = 'aktif'";
-  $sql_jml_adm = mysqli_query($conn, $query_jml_adm);
-  $result_adm = mysqli_fetch_array($sql_jml_adm);
-
-  //Jumlah Waiter
-  $query_jml_wtr = "select count(*) AS jumlah_wtr from user natural join level where id_level = 2 and status = 'aktif'";
-  $sql_jml_wtr = mysqli_query($conn, $query_jml_wtr);
-  $result_wtr = mysqli_fetch_array($sql_jml_wtr);
-
-  //Jumlah Kasir
-  $query_jml_ksr = "select count(*) AS jumlah_ksr from user natural join level where id_level = 3 and status = 'aktif'";
-  $sql_jml_ksr = mysqli_query($conn, $query_jml_ksr);
-  $result_ksr = mysqli_fetch_array($sql_jml_ksr);
-
-  //Jumlah Owner
-  $query_jml_own = "select count(*) AS jumlah_own from user natural join level where id_level = 4 and status = 'aktif'";
-  $sql_jml_own = mysqli_query($conn, $query_jml_own);
-  $result_own = mysqli_fetch_array($sql_jml_own);
-
-  //Jumlah Pelanggan
-  $query_jml_plg = "select count(*) AS jumlah_plg from user natural join level where id_level = 5 and status = 'aktif'";
-  $sql_jml_plg = mysqli_query($conn, $query_jml_plg);
-  $result_plg = mysqli_fetch_array($sql_jml_plg);
-
-  while($r = mysqli_fetch_array($sql)){
-    
-    $nama_user = $r['nama_user'];
-    //$id_level = $r['id_level'];
+$status_counts = [];
+foreach ($levels as $id_level => $level_name) {
+    $query = "SELECT COUNT(*) AS jumlah FROM user WHERE id_level = $id_level AND status = 'aktif'";
+    $sql = mysqli_query($conn, $query);
+    $status_counts[$level_name] = mysqli_fetch_array($sql)['jumlah'];
+}
 
 ?>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Beranda</title>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="stylesheet" href="template/dashboard/css/bootstrap.min.css" />
-<link rel="stylesheet" href="template/dashboard/css/bootstrap-responsive.min.css" />
-<link rel="stylesheet" href="template/dashboard/css/fullcalendar.css" />
-<link rel="stylesheet" href="template/dashboard/css/matrix-style.css" />
-<link rel="stylesheet" href="template/dashboard/css/matrix-media.css" />
-<link href="template/dashboard/font-awesome/css/font-awesome.css" rel="stylesheet" />
-<link rel="stylesheet" href="template/dashboard/css/jquery.gritter.css" />
-<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,800' rel='stylesheet' type='text/css'>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beranda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="template/dashboard/css/custom.css" />
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            height: 100vh;
+            width: 280px;
+            background: #212529;
+            color: #fff;
+            position: fixed;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar h3 {
+            text-align: center;
+            margin-top: 80px;
+            margin-bottom: 40px;
+            color: #17a2b8;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            color: #adb5bd;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .sidebar a:hover {
+            background: #17a2b8;
+            color: #fff;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        /* Content styling */
+        .content {
+            margin-left: 280px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.shifted {
+            margin-left: 20px;
+        }
+
+        /* Button to toggle sidebar */
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: #17a2b8;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
 </head>
 <body>
+<!-- Toggle Button -->
+<button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
 
-
-<br>
-<!--sidebar-menu-->
-<div id="sidebar"><a href="beranda.php" class="visible-phone"><i class="icon icon-home"></i> Beranda</a>
-  <ul>
-  <?php
-    if($r['id_level'] == 1){
-  ?>
-    <li class="active"><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_referensi.php"><i class="icon icon-tasks"></i> <span>Entri Referensi</span></a> </li>
-    <li> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="entri_transaksi.php"><i class="icon icon-inbox"></i> <span>Entri Transaksi</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 2){
-  ?>
-    <li class="active"><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 3){
-  ?>
-    <li class="active"><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_transaksi.php"><i class="icon icon-inbox"></i> <span>Entri Transaksi</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 4){
-  ?>
-    <li class="active"><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="generate_laporan.php"><i class="icon icon-print"></i> <span>Generate Laporan</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    } else if($r['id_level'] == 5){
-  ?>
-    <li class="active"><a href="beranda.php"><i class="icon icon-home"></i> <span>Beranda</span></a> </li>
-    <li> <a href="entri_order.php"><i class="icon icon-shopping-cart"></i> <span>Entri Order</span></a> </li>
-    <li> <a href="logout.php"><i class="icon icon-sign-out"></i> <span>Logout</span></a> </li>
-  <?php
-    }
-  ?>
-  </ul>
-</div>
-<!--sidebar-menu-->
-
-<!--main-container-part-->
-<div id="content">
-<!--breadcrumbs-->
-  <div id="content-header">
-    <div id="breadcrumb"> <a href="beranda.php" title="Go to Home" class="tip-bottom"><i class="icon-home"></i> Beranda</a></div>
-  </div>
-<!--End-breadcrumbs-->
-  
-<!--Action boxes-->
-  <div class="container-fluid">
-    <div class="row-fluid">
-    <?php
-      if($r['id_level'] == 1 || $r['id_level'] == 2 || $r['id_level'] == 3){
-    ?>
-      <div class="widget-box">
-        <div class="widget-title bg_lg"><span class="icon"><i class="icon-signal"></i></span>
-          <h5>Data Pengguna</h5>
-        </div>
-        <div class="widget-content" >
-          <div class="row-fluid">
-            <div class="span3">
-              <div class="widget-box">
-                <div class="widget-content nopadding">
-                  <ul class="site-stats quick-actions">
-                    <li class="bg_lb"><i class="icon-user"></i> <strong><?php echo $result_adm['jumlah_adm']; ?></strong> <small>Administrator</small></li>
-                    <li class="bg_ly"><i class="icon-user"></i> <strong><?php echo $result_wtr['jumlah_wtr']; ?></strong> <small>Total Waiter</small></li>
-                    <li class="bg_lg"><i class="icon-user"></i> <strong><?php echo $result_ksr['jumlah_ksr']; ?></strong> <small>Total Kasir</small></li>
-                    <li class="bg_ls"><i class="icon-user"></i> <strong><?php echo $result_own['jumlah_own']; ?></strong> <small>Total Owner</small></li>
-                    <li class="bg_lo"><i class="icon-user"></i> <strong><?php echo $result_plg['jumlah_plg']; ?></strong> <small>Total Pelanggan</small></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="span9">
-              <!--DATA WAITER-->
-              <div class="widget-box">
-                <?php
-                  $query_data_wtr = "select * from user where id_level = 2";
-                  $sql_data_wtr = mysqli_query($conn, $query_data_wtr);
-                  $no = 1;
-                ?>
-
-                <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
-                  <h5>Data Waiter</h5>
-                </div>
-                <div class="widget-content nopadding">
-                  <table class="table table-bordered" style="width: 100%">
-                    <thead>
-                      <tr>
-                        <th style="width:5%">No.</th>
-                        <th style="width:25%">Nama</th>
-                        <th style="width:30%">Username</th>
-                        <th style="width:20%">Status</th>
-                        <th style="width:20%">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php
-                        while($r_dt_wtr = mysqli_fetch_array($sql_data_wtr)){
-                      ?>
-                        <tr class="odd gradeX">
-                          <td><center><?php echo $no++; ?>.</center></td>
-                          <td><?php echo $r_dt_wtr['nama_user']; ?></td>
-                          <td><?php echo $r_dt_wtr['username']; ?></td>
-                          <td><?php echo $r_dt_wtr['status']; ?></td>
-                          <td>
-                            <form action="" method="post">
-                            <?php 
-                              if($r_dt_wtr['status'] == 'aktif'){
-                            ?>
-                                <button name="unvalidasi" value="<?php echo $r_dt_wtr['id_user']; ?>" class="btn btn-warning btn-mini">
-                                  <i class='icon icon-remove'></i>
-                                </button>
-                            <?php 
-                              }
-                            ?>
-
-                            <?php 
-                              if($r_dt_wtr['status'] == 'nonaktif'){
-                            ?>
-                                <button name="validasi" value="<?php echo $r_dt_wtr['id_user']; ?>" class="btn btn-info btn-mini"><i class='icon icon-ok'></i></button>
-                                <button name="hapus_user" value="<?php echo $r_dt_wtr['id_user']; ?>" class="btn btn-danger btn-mini"><i class='icon icon-trash'></i></button>
-                            <?php 
-                              }
-                            ?>
-                            </form>
-                          </td>
-                        </tr>
-                      <?php
-                        }
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <!--DATA KASIR-->
-              <div class="widget-box">
-                <?php
-                  $query_data_ksr = "select * from user where id_level = 3";
-                  $sql_data_ksr = mysqli_query($conn, $query_data_ksr);
-                  $no_ksr = 1;
-                ?>
-
-                <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
-                  <h5>Data Kasir</h5>
-                </div>
-                <div class="widget-content nopadding">
-                  <table class="table table-bordered table-striped " style="width: 100%">
-                    <thead>
-                      <tr>
-                        <th style="width:5%">No.</th>
-                        <th style="width:25%">Nama</th>
-                        <th style="width:30%">Username</th>
-                        <th style="width:20%">Status</th>
-                        <th style="width:20%">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php
-                        while($r_dt_ksr = mysqli_fetch_array($sql_data_ksr)){
-                      ?>
-                        <tr class="odd gradeX">
-                          <td><center><?php echo $no_ksr++; ?>.</center></td>
-                          <td><?php echo $r_dt_ksr['nama_user']; ?></td>
-                          <td><?php echo $r_dt_ksr['username']; ?></td>
-                          <td><?php echo $r_dt_ksr['status']; ?></td>
-                          <td>
-                            <form action="" method="post">
-                            <?php 
-                              if($r_dt_ksr['status'] == 'aktif'){
-                            ?>
-                                <button name="unvalidasi" value="<?php echo $r_dt_ksr['id_user']; ?>" class="btn btn-warning btn-mini">
-                                  <i class='icon icon-remove'></i>
-                                </button>
-                            <?php 
-                              }
-                            ?>
-
-                            <?php 
-                              if($r_dt_ksr['status'] == 'nonaktif'){
-                            ?>
-                                <button name="validasi" value="<?php echo $r_dt_ksr['id_user']; ?>" class="btn btn-info btn-mini"><i class='icon icon-ok'></i></button>
-                                <button name="hapus_user" value="<?php echo $r_dt_ksr['id_user']; ?>" class="btn btn-danger btn-mini"><i class='icon icon-trash'></i></button>
-                            <?php 
-                              }
-                            ?>
-                            </form>
-                          </td>
-                        </tr>
-                      <?php
-                        }
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!--DATA OWNER-->
-              <div class="widget-box">
-                <?php
-                  $query_data_own = "select * from user where id_level = 4";
-                  $sql_data_own = mysqli_query($conn, $query_data_own);
-                  $no_own = 1;
-                ?>
-
-                <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
-                  <h5>Data Owner</h5>
-                </div>
-                <div class="widget-content nopadding">
-                  <table class="table table-bordered table-striped" style="width: 100%">
-                    <thead>
-                      <tr>
-                        <th style="width:5%">No.</th>
-                        <th style="width:25%">Nama</th>
-                        <th style="width:30%">Username</th>
-                        <th style="width:20%">Status</th>
-                        <th style="width:20%">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php
-                        while($r_dt_own = mysqli_fetch_array($sql_data_own)){
-                      ?>
-                        <tr class="odd gradeX">
-                          <td><center><?php echo $no_own++; ?>.</center></td>
-                          <td><?php echo $r_dt_own['nama_user']; ?></td>
-                          <td><?php echo $r_dt_own['username']; ?></td>
-                          <td><?php echo $r_dt_own['status']; ?></td>
-                          <td>
-                            <form action="" method="post">
-                            <?php 
-                              if($r_dt_own['status'] == 'aktif'){
-                            ?>
-                                <button name="unvalidasi" value="<?php echo $r_dt_own['id_user']; ?>" class="btn btn-warning btn-mini">
-                                  <i class='icon icon-remove'></i>
-                                </button>
-                            <?php 
-                              }
-                            ?>
-
-                            <?php 
-                              if($r_dt_own['status'] == 'nonaktif'){
-                            ?>
-                                <button name="validasi" value="<?php echo $r_dt_own['id_user']; ?>" class="btn btn-info btn-mini"><i class='icon icon-ok'></i></button>
-                                <button name="hapus_user" value="<?php echo $r_dt_own['id_user']; ?>" class="btn btn-danger btn-mini"><i class='icon icon-trash'></i></button>
-                            <?php 
-                              }
-                            ?>
-                            </form>
-                          </td>
-                        </tr>
-                      <?php
-                        }
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!--DATA PELANGGAN-->
-              <div class="widget-box">
-                <?php
-                  $query_data_plg = "select * from user where id_level = 5";
-                  $sql_data_plg = mysqli_query($conn, $query_data_plg);
-                  $no_plg = 1;
-                ?>
-
-                <div class="widget-title"> <span class="icon"> <i class="icon-th"></i> </span>
-                  <h5>Data Pelanggan</h5>
-                </div>
-                <div class="widget-content nopadding">
-                  <table class="table table-bordered table-striped" style="width: 100%">
-                    <thead>
-                      <tr>
-                        <th style="width:5%">No.</th>
-                        <th style="width:25%">Nama</th>
-                        <th style="width:30%">Username</th>
-                        <th style="width:20%">Status</th>
-                        <th style="width:20%">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php
-                        while($r_dt_plg = mysqli_fetch_array($sql_data_plg)){
-                      ?>
-                        <tr class="odd gradeX">
-                          <td><center><?php echo $no_plg++; ?>.</center></td>
-                          <td><?php echo $r_dt_plg['nama_user']; ?></td>
-                          <td><?php echo $r_dt_plg['username']; ?></td>
-                          <td><?php echo $r_dt_plg['status']; ?></td>
-                          <td>
-                            <form action="" method="post">
-                            <?php 
-                              if($r_dt_plg['status'] == 'aktif'){
-                            ?>
-                                <button name="unvalidasi" value="<?php echo $r_dt_plg['id_user']; ?>" class="btn btn-warning btn-mini">
-                                  <i class='icon icon-remove'></i>
-                                </button>
-                            <?php 
-                              }
-                            ?>
-
-                            <?php 
-                              if($r_dt_plg['status'] == 'nonaktif'){
-                            ?>
-                                <button name="validasi" value="<?php echo $r_dt_plg['id_user']; ?>" class="btn btn-info btn-mini"><i class='icon icon-ok'></i></button>
-                                <button name="hapus_user" value="<?php echo $r_dt_plg['id_user']; ?>" class="btn btn-danger btn-mini"><i class='icon icon-trash'></i></button>
-                            <?php 
-                              }
-                            ?>
-                            </form>
-                          </td>
-                        </tr>
-                      <?php
-                        }
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-                <?php
-                  if(isset($_POST['hapus_user'])){
-                    $id_user = $_POST['hapus_user'];
-                    //echo $id_user;
-                    $query_hapus_user = "delete from user where id_user = $id_user";
-                    $sql_hapus_user = mysqli_query($conn, $query_hapus_user);
-                    if($sql_hapus_user){
-                      header('location: beranda.php');
-                      //$_SESSION['daftar'] = 'sukses';
-                    }
-                  }
-
-                  if(isset($_POST['validasi'])){
-                    $id_user = $_POST['validasi'];
-                    //echo $id_user;
-                    $query_validasi = "update user set status = 'aktif' where id_user = $id_user";
-                    $sql_validasi = mysqli_query($conn, $query_validasi);
-                    if($sql_validasi){
-                      header('location: beranda.php');
-                      //$_SESSION['daftar'] = 'sukses';
-                    }
-                  }
-
-                  if(isset($_POST['unvalidasi'])){
-                    $id_user = $_POST['unvalidasi'];
-                    //echo $id_user;
-                    $query_unvalidasi = "update user set status = 'nonaktif' where id_user = $id_user";
-                    $sql_unvalidasi = mysqli_query($conn, $query_unvalidasi);
-                    if($sql_unvalidasi){
-                      header('location: beranda.php');
-                      //$_SESSION['daftar'] = 'sukses';
-                    }
-                  }
-                ?>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <?php
-        } else {
-      ?>
-      <?php
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <h3>Welcome, <?php echo htmlspecialchars($r['nama_user']); ?></h3>
+    <ul>
+        <?php
+        if ($r['id_level'] == 1) { // Administrator
+        ?>
+            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+            <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
+            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+        <?php
+        } elseif ($r['id_level'] == 2) { // Waiter
+        ?>
+            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+        <?php
+        } elseif ($r['id_level'] == 3) { // Kasir
+        ?>
+            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+        <?php
+        } elseif ($r['id_level'] == 4) { // Owner
+        ?>
+            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+        <?php
+        } elseif ($r['id_level'] == 5) { // Pelanggan
+        ?>
+            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+        <?php
         }
-      ?>
-    </div>
-<!--End-Action boxes-->    
-  </div>
+        ?>
+        <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </ul>
 </div>
 
-<script type="text/javascript">
-  // This function is called from the pop-up menus to transfer to
-  // a different page. Ignore if the value returned is a null string:
-  function goPage (newURL) {
+<!-- Main Content -->
+<div class="content" id="content">
+    <div class="container mt-4">
+        <div class="row">
+            <?php if ($r['id_level'] <= 3) { ?>
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5><i class="fas fa-users"></i> Data Pengguna</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- User Stats -->
+                                <div class="col-md-4">
+                                    <div class="list-group">
+                                        <?php foreach ($status_counts as $level_name => $count) { ?>
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="fas fa-user-circle"></i> <?= $level_name; ?></span>
+                                                <span class="badge bg-primary rounded-pill"><?= $count; ?></span>
+                                            </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                                <!-- Data Tabels -->
+                                <div class="col-md-8">
+                                    <?php foreach ($levels as $id_level => $level_name) { 
+                                        $query = "SELECT * FROM user WHERE id_level = $id_level";
+                                        $sql = mysqli_query($conn, $query); ?>
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-success text-white">
+                                                <h5>Data <?= $level_name; ?></h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-bordered table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No.</th>
+                                                            <th>Nama</th>
+                                                            <th>Username</th>
+                                                            <th>Status</th>
+                                                            <th>Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php $no = 1; while ($r_dt = mysqli_fetch_array($sql)) { ?>
+                                                            <tr>
+                                                                <td><center><?= $no++; ?>.</center></td>
+                                                                <td><?= $r_dt['nama_user']; ?></td>
+                                                                <td><?= $r_dt['username']; ?></td>
+                                                                <td><span class="badge <?= $r_dt['status'] == 'aktif' ? 'bg-success' : 'bg-secondary'; ?>"><?= $r_dt['status']; ?></span></td>
+                                                                <td>
+                                                                    <form action="" method="post">
+                                                                        <?php if ($r_dt['status'] == 'aktif') { ?>
+                                                                            <button name="unvalidasi" value="<?= $r_dt['id_user']; ?>" class="btn btn-warning btn-sm"><i class="fas fa-ban"></i> Nonaktifkan</button>
+                                                                        <?php } else { ?>
+                                                                            <button name="validasi" value="<?= $r_dt['id_user']; ?>" class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Aktifkan</button>
+                                                                            <button name="hapus_user" value="<?= $r_dt['id_user']; ?>" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i> Hapus</button>
+                                                                        <?php } ?>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        <?php } ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+</div>
 
-      // if url is empty, skip the menu dividers and reset the menu selection to default
-      if (newURL != "") {
-      
-          // if url is "-", it is this page -- reset the menu:
-          if (newURL == "-" ) {
-              resetMenu();            
-          } 
-          // else, send page to designated URL            
-          else {  
-            document.location.href = newURL;
-          }
-      }
-  }
+<!-- Modal untuk konfirmasi hapus -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin menghapus data ini?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-// resets the menu selection upon entry to this page:
-function resetMenu() {
-   document.gomenu.selector.selectedIndex = 2;
-}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Skrip untuk toggle sidebar
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        sidebar.classList.toggle('closed');
+        content.classList.toggle('shifted');
+    }
 </script>
 </body>
 </html>
+
 <?php
-  }
-} else {
-  header('location: logout.php');
+// Handle form submissions for user status update and deletion
+if (isset($_POST['hapus_user'])) {
+    $id_user = $_POST['hapus_user'];
+    $query = "DELETE FROM user WHERE id_user = $id_user";
+    mysqli_query($conn, $query);
+    header('location: beranda.php');
+    exit;
+}
+
+if (isset($_POST['validasi'])) {
+    $id_user = $_POST['validasi'];
+    $query = "UPDATE user SET status = 'aktif' WHERE id_user = $id_user";
+    mysqli_query($conn, $query);
+    header('location: beranda.php');
+    exit;
+}
+
+if (isset($_POST['unvalidasi'])) {
+    $id_user = $_POST['unvalidasi'];
+    $query = "UPDATE user SET status = 'nonaktif' WHERE id_user = $id_user";
+    mysqli_query($conn, $query);
+    header('location: beranda.php');
+    exit;
 }
 ob_flush();
-?>

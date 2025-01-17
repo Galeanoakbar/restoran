@@ -219,7 +219,6 @@ if(isset ($_SESSION['username'])){
           <?php
           } elseif ($r['id_level'] == 5) { // Level 5
           ?>
-              <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
               <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
           <?php
           }

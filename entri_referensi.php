@@ -148,7 +148,7 @@ if (isset($_SESSION['username'])) {
         }
     </style>
 </head>
-<body>                                               bbbbbbb
+<body>
 <body>
     <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
     <div class="sidebar" id="sidebar">
@@ -182,7 +182,6 @@ if (isset($_SESSION['username'])) {
         <?php
         } elseif ($user['id_level'] == 5) { // Level 5
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
         <?php
         }
