@@ -149,13 +149,13 @@ if (isset($_SESSION['username'])) {
     </style>
 </head>
 <body>
-<body>
+
     <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
     <div class="sidebar" id="sidebar">
         <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
         <ul>
         <?php
-        if ($user['id_level'] == 1) { // Owner
+        if ($user['id_level'] == 1) { // admin
         ?>
             <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
@@ -171,13 +171,11 @@ if (isset($_SESSION['username'])) {
         <?php
         } elseif ($user['id_level'] == 3) { // Level 3
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
             <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
         <?php
         } elseif ($user['id_level'] == 4) { // Level 4
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
         <?php
         } elseif ($user['id_level'] == 5) { // Level 5

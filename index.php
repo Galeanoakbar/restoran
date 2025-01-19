@@ -163,7 +163,27 @@ if (isset($_POST['login'])) {
             $_SESSION['username'] = $username;
             $_SESSION['id_user'] = $user['id_user'];
             $_SESSION['level'] = $user['id_level'];
-            header('location: beranda.php');
+
+            // Redirect berdasarkan level pengguna
+            switch ($user['id_level']) {
+                case 1:
+                case 2:
+                    header('location: beranda.php');
+                    break;
+                case 3:
+                    header('location: entri_transaksi.php');
+                    break;
+                case 4:
+                    header('location: generate_laporan.php');
+                    break;
+                case 5:
+                    header('location: entri_order.php');
+                    break;
+                default:
+                    $_SESSION['error'] = 'Level pengguna tidak valid.';
+                    header('location: index.php');
+                    break;
+            }
             exit();
         } else {
             $_SESSION['error'] = 'Password salah atau akun belum divalidasi.';
@@ -176,6 +196,7 @@ if (isset($_POST['login'])) {
     exit();
 }
 ?>
+
 </body>
 </html>
 <?php ob_end_flush(); ?>

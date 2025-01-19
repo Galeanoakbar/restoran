@@ -103,10 +103,9 @@ session_start();
             <div class="form-group">
                 <select name="id_level" class="form-control" required>
                     <option value="" disabled selected>Select Your Role</option>
+                    <option value='1'>Administrator</option>                    
                     <option value='2'>Waiter</option>
-                    <option value='3'>Cashier</option>
-                    <option value='4'>Owner</option>
-                    <option value='5'>Customer</option>
+                    <option value='3'>Kasir</option>
                 </select>
             </div>
             <button type='submit' name='kirim_daftar' class='btn btn-custom'><i class='icon icon-save'></i>&nbsp; CREATE ACCOUNT</button>

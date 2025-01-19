@@ -140,13 +140,11 @@ foreach ($levels as $id_level => $level_name) {
         <?php
         } elseif ($r['id_level'] == 3) { // Kasir
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
             <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
         <?php
         } elseif ($r['id_level'] == 4) { // Owner
         ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
             <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
         <?php
         } elseif ($r['id_level'] == 5) { // Pelanggan

@@ -95,45 +95,46 @@ if (isset($_SESSION['username'])) {
     </style>
 </head>
 <body>
-<button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
-<div class="sidebar" id="sidebar">
-    <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
-    <ul>
-        <?php
-        if ($r['id_level'] == 1) { 
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
-            <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($r['id_level'] == 2) { // Level 2
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($r['id_level'] == 3) { // Level 3
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($r['id_level'] == 4) { // Level 4
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($r['id_level'] == 5) { // Level 5
-        ?>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-        <?php
-        }
-        ?>
-        <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </ul>
-</div>
+    <!-- Toggle Button -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h3>Welcome, <?php echo htmlspecialchars($r['nama_user']); ?></h3>
+        <ul>
+            <?php
+            if ($r['id_level'] == 1) { // Administrator
+            ?>
+                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+                <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
+                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php
+            } elseif ($r['id_level'] == 2) { // Waiter
+            ?>
+                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php
+            } elseif ($r['id_level'] == 3) { // Kasir
+            ?>
+                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php
+            } elseif ($r['id_level'] == 4) { // Owner
+            ?>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php
+            } elseif ($r['id_level'] == 5) { // Pelanggan
+            ?>
+                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+            <?php
+            }
+            ?>
+            <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </ul>
+    </div>
 
     <br><br><br>
     <div class="content" id="content">
