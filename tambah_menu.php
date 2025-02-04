@@ -82,11 +82,11 @@ if (isset($_SESSION['username'])) {
             </div>
             <div class="mb-3">
                 <label for="harga" class="form-label">Harga / Porsi</label>
-                <input type="number" name="harga" id="harga" class="form-control" placeholder="Rupiah" value="<?php echo $harga; ?>" 
+                <input type="number" name="harga" id="harga" class="form-control" placeholder="Rupiah" value="<?php echo $harga; ?>" min="0">
             </div>
             <div class="mb-3">
                 <label for="stok" class="form-label">Stok Persediaan</label>
-                <input type="number" name="stok" id="stok" class="form-control" placeholder="Jumlah Stok" value="<?php echo $stok; ?>">
+                <input type="number" name="stok" id="stok" class="form-control" placeholder="Jumlah Stok" value="<?php echo $stok; ?>" " min="0">
             </div>
             <div class="mb-3">
                 <label for="gambar" class="form-label">Gambar Masakan</label>

@@ -190,7 +190,7 @@ if (isset($_SESSION['username'])) {
   </div>
     <!-- Content -->
     <div class="content">
-        <h1 class="text-center mb-4">Referensi Makanan</h1>
+        <h1 class="text-center mb-4">Menu Makanan</h1>
         <div class="text-end mb-3">
             <a href="tambah_menu.php" class="btn btn-primary">Tambah Data</a>
         </div>
