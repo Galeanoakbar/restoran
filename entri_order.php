@@ -1,308 +1,343 @@
-
 <?php
+include "connection/koneksi.php";
 session_start();
 ob_start();
 
-// Koneksi ke database
-$host = 'localhost';
-$user = 'root';
-$password = '';
-$database = 'kasir_restoran';
-$conn = mysqli_connect($host, $user, $password, $database);
-
-if (!$conn) {
-    die('Koneksi gagal: ' . mysqli_connect_error());
-}
-
-// Periksa apakah pengguna sudah login
-if (!isset($_SESSION['id_user'])) {
-    die('Silakan login terlebih dahulu.');
+// Jika sesi tidak ada, redirect ke logout
+if (!isset($_SESSION['username'])) {
+    header('location: logout.php');
+    exit();
 }
 
 $id = $_SESSION['id_user'];
 
-// Ambil data user dari database
-$query_user = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
-$sql_user = mysqli_query($conn, $query_user);
-$user_data = mysqli_fetch_assoc($sql_user);
-$nama_user = $user_data['nama_user'];
-
-// Notifikasi edit menu
+// Tampilkan pesan edit_menu jika ada (gunakan print_r bila berupa array)
 if (isset($_SESSION['edit_menu'])) {
-    echo $_SESSION['edit_menu'];
+    echo '<pre>';
+    print_r($_SESSION['edit_menu']);
+    echo '</pre>';
     unset($_SESSION['edit_menu']);
 }
 
-// Ambil daftar menu dari tabel masakan
-$query_menu = "SELECT * FROM masakan";
-$menu_result = mysqli_query($conn, $query_menu);
-
-if (!$menu_result) {
-    die('Query gagal: ' . mysqli_error($conn));
-}
-
-// Proses pemesanan makanan
-if (isset($_POST['pesan'])) {
-    $id_masakan = $_POST['id_masakan'];
-
-    // Periksa stok
-    $query_stok = "SELECT stok FROM masakan WHERE id_masakan = $id_masakan";
-    $stok_result = mysqli_query($conn, $query_stok);
-    $stok_data = mysqli_fetch_assoc($stok_result);
-
-    if ($stok_data['stok'] > 0) {
-        // Periksa apakah menu sudah ada di keranjang
-        $query_cek_pesan = "SELECT * FROM tb_pesan WHERE id_user = $id AND id_masakan = $id_masakan";
-        $cek_pesan_result = mysqli_query($conn, $query_cek_pesan);
-
-        if (mysqli_num_rows($cek_pesan_result) > 0) {
-            // Jika sudah ada, update jumlah pesanan
-            $query_update_jumlah = "UPDATE tb_pesan SET jumlah = jumlah + 1 WHERE id_user = $id AND id_masakan = $id_masakan";
-            mysqli_query($conn, $query_update_jumlah);
-        } else {
-            // Jika belum ada, masukkan pesanan baru
-            $query_pesan = "INSERT INTO tb_pesan (id_user, id_masakan, jumlah) VALUES ($id, $id_masakan, 1)";
-            mysqli_query($conn, $query_pesan);
-        }
-
-        // Kurangi stok
-        $query_update_stok = "UPDATE masakan SET stok = stok - 1 WHERE id_masakan = $id_masakan";
-        mysqli_query($conn, $query_update_stok);
-    } else {
-        echo "Stok habis!";
-    }
-}
-
-// Ambil keranjang pesanan
-$query_order = "SELECT p.id_pesan, m.nama_masakan, p.jumlah, m.harga FROM tb_pesan p JOIN masakan m ON p.id_masakan = m.id_masakan WHERE p.id_user = $id";
-$order_fiks_result = mysqli_query($conn, $query_order);
-
-// Hapus pesanan dari keranjang
-if (isset($_POST['hapus_pesan'])) {
-    $id_pesan = $_POST['hapus_pesan'];
-    
-    // Ambil data jumlah dari pesanan
-    $query_jumlah = "SELECT id_masakan, jumlah FROM tb_pesan WHERE id_pesan = $id_pesan";
-    $result_jumlah = mysqli_query($conn, $query_jumlah);
-    $data_jumlah = mysqli_fetch_assoc($result_jumlah);
-
-    // Kembalikan stok
-    $query_kembalikan_stok = "UPDATE masakan SET stok = stok + {$data_jumlah['jumlah']} WHERE id_masakan = {$data_jumlah['id_masakan']}";
-    mysqli_query($conn, $query_kembalikan_stok);
-
-    // Hapus pesanan
-    $query_hapus = "DELETE FROM tb_pesan WHERE id_pesan = $id_pesan";
-    mysqli_query($conn, $query_hapus);
-}
-
-// Hitung total harga
-$query_total_harga = "SELECT SUM(p.jumlah * m.harga) AS total_harga FROM tb_pesan p JOIN masakan m ON p.id_masakan = m.id_masakan WHERE p.id_user = $id";
-$result_total_harga = mysqli_query($conn, $query_total_harga);
-$total_harga_data = mysqli_fetch_assoc($result_total_harga);
-$total_harga = $total_harga_data['total_harga'] ?? 0;
-
-// Proses checkout
-if (isset($_POST['checkout'])) {
-    $uang_bayar = $_POST['uang_bayar'];
-    $uang_kembali = $uang_bayar - $total_harga;
-
-    if ($uang_bayar < $total_harga) {
-        echo "Uang bayar kurang!";
-    } else {
-        // Simpan ke tabel order_pesanan
-        $query_order_pesanan = "INSERT INTO order_pesanan (id_admin, id_pengunjung, waktu_pesan, total_harga, uang_bayar, uang_kembali, status_order) VALUES (1, $id, NOW(), $total_harga, $uang_bayar, $uang_kembali, 'sudah bayar')";
-        if (mysqli_query($conn, $query_order_pesanan)) {
-            $id_order = mysqli_insert_id($conn);
-
-            // Hapus pesanan dari keranjang
-            $query_tb_pesan = "SELECT * FROM tb_pesan WHERE id_user = $id";
-            $pesan_result = mysqli_query($conn, $query_tb_pesan);
-            while ($item = mysqli_fetch_assoc($pesan_result)) {
-                $id_masakan = $item['id_masakan'];
-                $jumlah = $item['jumlah'];
-
-                // Update stok
-                $query_update_stok = "UPDATE masakan SET stok = stok - $jumlah WHERE id_masakan = $id_masakan";
-                mysqli_query($conn, $query_update_stok);
-                
-                // Hapus item dari keranjang
-                $query_hapus_item = "DELETE FROM tb_pesan WHERE id_pesan = {$item['id_pesan']}";
-                mysqli_query($conn, $query_hapus_item);
-            }
-
-            echo "Pesanan berhasil diselesaikan! Total harga: Rp " . number_format($total_harga) . ". Uang kembali: Rp " . number_format($uang_kembali);
-        } else {
-            echo "Terjadi kesalahan saat memproses pesanan.";
-        }
-    }
-}
+// Ambil data user (asumsi hanya satu record)
+$query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
+$sql = mysqli_query($conn, $query);
+$r = mysqli_fetch_array($sql);
+$nama_user = $r['nama_user'];
 ?>
-
-
 <!DOCTYPE html>
-<html lang="id">
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Pemesanan</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
-        }
-
-        .dashboard-title-container {
-            background-color: #007bff;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 0 0 10px 10px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .card:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .alert {
-            border-radius: 8px;
-        }
-
-        .table {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-
-        .food-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .table th,
-        .table td {
-            vertical-align: middle;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Entri Order - Modern & Interactive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome untuk ikon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Open Sans', sans-serif;
+    }
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+    }
+    .menu-card {
+      transition: transform 0.3s;
+    }
+    .menu-card:hover {
+      transform: scale(1.05);
+    }
+    .cart-item input[type="number"] {
+      width: 80px;
+    }
+    
+  </style>
 </head>
-
 <body>
-    <div class="dashboard-title-container">
-        <h1>Selamat Datang, <?= $nama_user; ?>!</h1>
-        <p>Silakan pesan makanan favorit Anda!</p>
+  <div class="container my-4">
+    <!-- User Greeting -->
+    <div class="mb-4">
+      <h2>Selamat Datang, <?php echo htmlspecialchars($nama_user); ?></h2>
     </div>
 
-    <div class="container my-4">
-        <!-- Notifikasi -->
-        <?php if (!empty($pesan)) : ?>
-            <div class="alert alert-success text-center">
-                <?= $pesan; ?>
+    <?php
+    // Cek apakah user sudah memiliki order aktif
+    $order = [];
+    $query_lihat_order = "SELECT * FROM order_pesanan";
+    $sql_lihat_order = mysqli_query($conn, $query_lihat_order);
+    while ($r_dt_order = mysqli_fetch_array($sql_lihat_order)) {
+        if ($r_dt_order['status_order'] != 'sudah bayar') {
+            $order[] = $r_dt_order['id_pengunjung'];
+        }
+    }
+    if (in_array($id, $order)) {
+    ?>
+      <!-- Tampilan jika order sudah ada -->
+      <div class="alert alert-info" role="alert">
+        <h4 class="alert-heading">Informasi Pesanan</h4>
+        Terimakasih, Anda telah melakukan pemesanan. Silahkan tunggu pesanan tiba di meja saudara.
+        Setelah selesai, lakukan pembayaran di kasir.
+      </div>
+      <!-- Detail Order -->
+      <div class="card mb-4">
+        <div class="card-header">
+          Menu yang dipesan
+        </div>
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Menu</th>
+                <th class="text-center">Jumlah</th>
+                <th class="text-end">Harga</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php
+              $no_order_fiks = 1;
+              $query_order_fiks = "SELECT * FROM tb_pesan NATURAL JOIN masakan WHERE id_user = $id AND status_pesan != 'sudah'";
+              $sql_order_fiks = mysqli_query($conn, $query_order_fiks);
+              while ($r_order_fiks = mysqli_fetch_array($sql_order_fiks)) {
+              ?>
+              <tr>
+                <td><?php echo $no_order_fiks++; ?></td>
+                <td><?php echo $r_order_fiks['nama_masakan']; ?></td>
+                <td class="text-center"><?php echo $r_order_fiks['jumlah']; ?></td>
+                <td class="text-end">Rp. <?php echo number_format($r_order_fiks['harga'], 0, ',', '.'); ?></td>
+                <td class="text-end">Rp. <?php echo number_format($r_order_fiks['harga'] * $r_order_fiks['jumlah'], 0, ',', '.'); ?></td>
+              </tr>
+              <?php
+              }
+              $query_harga = "SELECT * FROM order_pesanan WHERE id_pengunjung = $id AND status_order = 'belum bayar'";
+              $sql_harga = mysqli_query($conn, $query_harga);
+              $result_harga = mysqli_fetch_array($sql_harga);
+              ?>
+              <tr>
+                <td colspan="4" class="text-end"><strong>Total</strong></td>
+                <td class="text-end"><strong>Rp. <?php echo number_format($result_harga['total_harga'], 0, ',', '.'); ?></strong></td>
+              </tr>
+              <tr>
+                <td colspan="4" class="text-end"><strong>No. Meja</strong></td>
+                <td class="text-center"><strong><?php echo $result_harga['no_meja']; ?></strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php
+    } else {
+    ?>
+      <!-- Tampilan menu dan keranjang pesanan -->
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Tampilan Menu dengan Kartu Modern -->
+          <div class="row">
+          <?php
+          // Ambil daftar menu yang sudah dipesan agar tombol "Pesan" dinonaktifkan
+          $pesan = [];
+          $query_lihat_pesan = "SELECT * FROM tb_pesan WHERE id_user = $id AND status_pesan != 'sudah'";
+          $sql_lihat_pesan = mysqli_query($conn, $query_lihat_pesan);
+          while ($r_dt_pesan = mysqli_fetch_array($sql_lihat_pesan)) {
+              $pesan[] = $r_dt_pesan['id_masakan'];
+          }
+          $query_data_makanan = "SELECT * FROM masakan WHERE stok > 0 ORDER BY id_masakan DESC";
+          $sql_data_makanan = mysqli_query($conn, $query_data_makanan);
+          while ($r_dt_makanan = mysqli_fetch_array($sql_data_makanan)) {
+          ?>
+            <div class="col-md-4 mb-4">
+              <div class="card menu-card shadow-sm">
+                <img src="gambar/<?php echo $r_dt_makanan['gambar_masakan']; ?>" class="card-img-top" alt="<?php echo $r_dt_makanan['nama_masakan']; ?>">
+                <div class="card-body">
+                  <h5 class="card-title"><?php echo $r_dt_makanan['nama_masakan']; ?></h5>
+                  <p class="card-text">Harga: Rp. <?php echo number_format($r_dt_makanan['harga'], 0, ',', '.'); ?>,-</p>
+                  <p class="card-text">Stok: <?php echo $r_dt_makanan['stok']; ?> Porsi</p>
+                  <form action="" method="post">
+                    <?php if (in_array($r_dt_makanan['id_masakan'], $pesan)) { ?>
+                      <button type="button" class="btn btn-danger" disabled>
+                        <i class="fas fa-shopping-cart"></i> Telah dipesan
+                      </button>
+                    <?php } else { ?>
+                      <button type="submit" name="tambah_pesan" value="<?php echo $r_dt_makanan['id_masakan']; ?>" class="btn btn-success">
+                        <i class="fas fa-shopping-cart"></i> Pesan
+                      </button>
+                    <?php } ?>
+                  </form>
+                </div>
+              </div>
             </div>
-        <?php endif; ?>
-
-        <!-- Daftar Menu -->
-        <div class="row mb-4">
-            <h2 class="text-center mb-4">Menu Makanan</h2>
-            <?php while ($menu = mysqli_fetch_assoc($menu_result)) : ?>
-                <div class="col-md-4 col-sm-6 mb-4">
-                    <div class="card">
-                        <img src="gambar/<?= $menu['gambar_masakan']; ?>" class="food-image" alt="<?= $menu['nama_masakan']; ?>">
-                        <div class="card-body text-center">
-                            <h5 class="card-title"><?= $menu['nama_masakan']; ?></h5>
-                            <p class="card-text">Rp <?= number_format($menu['harga']); ?></p>
-                            <form method="POST" action="">
-                                <input type="hidden" name="id_masakan" value="<?= $menu['id_masakan']; ?>">
-                                <button type="submit" name="pesan" class="btn btn-primary">Pesan</button>
-                            </form>
+          <?php
+          }
+          // Proses penambahan pesanan
+          if (isset($_REQUEST['tambah_pesan'])) {
+              $id_masakan = $_REQUEST['tambah_pesan'];
+              $query_tambah_pesan = "INSERT INTO tb_pesan VALUES('', '$id', '', '$id_masakan', '', '')";
+              $sql_tambah_pesan = mysqli_query($conn, $query_tambah_pesan);
+              $query_lihat_pesannya = "SELECT * FROM tb_pesan ORDER BY id_pesan DESC LIMIT 1";
+              $sql_lihat_pesannya = mysqli_query($conn, $query_lihat_pesannya);
+              $result_lihat_pesannya = mysqli_fetch_array($sql_lihat_pesannya);
+              $id_pesannya = $result_lihat_pesannya['id_pesan'];
+              $query_olah_stok = "INSERT INTO stok_menu VALUES('', '$id_pesannya', '', 'belum cetak')";
+              $sql_olah_stok = mysqli_query($conn, $query_olah_stok);
+              if ($sql_tambah_pesan) {
+                  header('location: entri_order.php');
+              }
+          }
+          ?>
+          </div>
+        </div>
+        <div class="col-md-4">
+        <div class="card shadow-lg">
+            <!-- Header dengan latar berwarna dan judul yang lebih jelas -->
+            <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Keranjang Pemesanan</h5>
+            </div>
+            <div class="card-body">
+            <form action="" method="post">
+                <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>Menu Pesanan</th>
+                        <th class="text-center">Jumlah</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    // Ambil data pesanan yang belum selesai (status 'sudah' belum terpenuhi)
+                    $query_draft_pesan = "SELECT * FROM tb_pesan NATURAL JOIN masakan WHERE id_user = $id AND status_pesan != 'sudah'";
+                    $sql_draft_pesan = mysqli_query($conn, $query_draft_pesan);
+                    while ($r_draft_pesan = mysqli_fetch_array($sql_draft_pesan)) {
+                    ?>
+                    <tr class="cart-item">
+                        <td><?php echo htmlspecialchars($r_draft_pesan['nama_masakan']); ?></td>
+                        <td class="text-center">
+                        <div class="input-group">
+                            <input type="number" name="jumlah<?php echo $r_draft_pesan['id_masakan']; ?>" id="jumlah<?php echo $r_draft_pesan['id_pesan']; ?>" 
+                                value="1" min="1" class="form-control text-center" onchange="hitungTotal()">
                         </div>
-                    </div>
-                </div>
-            <?php endwhile; ?>
-        </div>
-
-        <!-- Keranjang Pesanan -->
-        <h2 class="text-center mb-4">Keranjang Pesanan</h2>
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead class="table-primary text-center">
-                    <tr>
-                        <th>Nama</th>
-                        <th>Jumlah</th>
-                        <th>Harga</th>
-                        <th>Aksi</th>
+                        <!-- Simpan harga sebagai input tersembunyi untuk perhitungan -->
+                        <input type="hidden" id="harga<?php echo $r_draft_pesan['id_pesan']; ?>" value="<?php echo $r_draft_pesan['harga']; ?>">
+                        </td>
+                        <td class="text-center">
+                        <button type="submit" name="hapus_pesan" value="<?php echo $r_draft_pesan['id_pesan']; ?>" class="btn btn-sm btn-danger" title="Hapus Pesanan">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody class="text-center">
-                    <?php while ($order = mysqli_fetch_assoc($order_fiks_result)) : ?>
-                        <tr>
-                            <td><?= $order['nama_masakan']; ?></td>
-                            <td>
-                                <form method="POST" action="">
-                                    <div class="btn-group">
-                                        <button type="submit" name="update_jumlah" value="decrease_<?= $order['id_pesan']; ?>" class="btn btn-secondary">-</button>
-                                        <button type="submit" name="update_jumlah" value="increase_<?= $order['id_pesan']; ?>" class="btn btn-secondary">+</button>
-                                    </div>
-                                </form>
-                            </td>
-                            <td>Rp <?= number_format($order['harga'] * $order['jumlah']); ?></td>
-                            <td>
-                                <form method="POST" action="">
-                                    <button type="submit" name="hapus_pesan" value="<?= $order['id_pesan']; ?>" class="btn btn-danger">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
+                    <?php } ?>
+                    <!-- Input untuk nomor meja -->
                     <tr>
-                        <td colspan="2">Total Harga</td>
-                        <td colspan="2">Rp <?= number_format($total_harga); ?></td>
+                        <td><strong>No. Meja</strong></td>
+                        <td colspan="2">
+                        <input type="number" name="no_meja" class="form-control" placeholder="Masukkan no meja"required>
+                        </td>
                     </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pembayaran -->
-        <?php if ($total_harga > 0) : ?>
-            <h2 class="text-center mb-4">Pembayaran</h2>
-            <form method="POST" action="">
-                <input type="hidden" name="total_harga" value="<?= $total_harga; ?>">
-                <div class="mb-3">
-                    <label for="uang_bayar" class="form-label">Uang Bayar</label>
-                    <input type="number" name="uang_bayar" id="uang_bayar" class="form-control" required>
+                    <!-- Baris total harga -->
+                    <tr>
+                        <td colspan="2"><strong>Total Harga</strong></td>
+                        <td class="text-end">
+                        <span class="badge bg-success">Rp. <span id="total_harga">0</span>,-</span>
+                        <input type="hidden" name="total_harga" id="tot" value="0">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
                 </div>
-                <button type="submit" name="checkout" class="btn btn-success w-100">Checkout</button>
+                <!-- Tombol proses pesanan yang lebih besar dan jelas -->
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" name="proses_pesan" class="btn btn-info btn-lg">
+                    <i class="fas fa-share"></i> Proses Pesanan
+                    </button>
+                </div>
             </form>
-        <?php endif; ?>
-    </div>
+            </div>
+        </div>
+        </div>
+
+      </div>
+    <?php
+    } // end if order active else
+    // Proses hapus pesan
+    if (isset($_POST['hapus_pesan'])) {
+        $id_pesan = $_POST['hapus_pesan'];
+        $query_hapus_pesan = "DELETE FROM tb_pesan WHERE id_pesan = $id_pesan";
+        $sql_hapus_pesan = mysqli_query($conn, $query_hapus_pesan);
+        if ($sql_hapus_pesan) {
+            header('location: entri_order.php');
+        }
+    }
+
+    // Proses order submission
+    if (isset($_POST['proses_pesan'])) {
+        $id_admin = '';
+        $id_pengunjung = $id;
+        $no_meja = $_POST['no_meja'];
+        $total_harga = $_POST['total_harga'];
+        $uang_bayar = '';
+        $uang_kembali = '';
+        $status_order = 'belum bayar';
+
+        date_default_timezone_set('Asia/Jakarta');
+        $time = date('YmdHis');
+        $query_simpan_order = "INSERT INTO order_pesanan VALUES('', '$id_admin', '$id_pengunjung', $time, '$no_meja', '$total_harga', '$uang_bayar', '$uang_kembali', '$status_order')";
+        $sql_simpan_order = mysqli_query($conn, $query_simpan_order);
+
+        $query_tampil_order = "SELECT * FROM order_pesanan WHERE id_pengunjung = $id ORDER BY id_order DESC LIMIT 1";
+        $sql_tampil_order = mysqli_query($conn, $query_tampil_order);
+        $result_tampil_order = mysqli_fetch_array($sql_tampil_order);
+        $id_ordernya = $result_tampil_order['id_order'];
+
+        $query_ubah_jumlah = "SELECT * FROM tb_pesan LEFT JOIN masakan ON tb_pesan.id_masakan = masakan.id_masakan WHERE id_user = $id AND status_pesan != 'sudah'";
+        $sql_ubah_jumlah = mysqli_query($conn, $query_ubah_jumlah);
+        while ($r_ubah_jumlah = mysqli_fetch_array($sql_ubah_jumlah)) {
+            $tahu = $r_ubah_jumlah['id_masakan'];
+            $tempe = $_POST['jumlah' . $tahu];
+            $id_pesan = $r_ubah_jumlah['id_pesan'];
+            $query_stok = "SELECT * FROM masakan WHERE id_masakan = $tahu";
+            $sql_stok = mysqli_query($conn, $query_stok);
+            $result_stok = mysqli_fetch_array($sql_stok);
+            $sisa_stok = $result_stok['stok'] - $tempe;
+            $query_proses_ubah = "UPDATE tb_pesan SET jumlah = $tempe, id_order = $id_ordernya WHERE id_masakan = $tahu AND id_user = $id AND status_pesan != 'sudah'";
+            $query_kurangi_stok = "UPDATE masakan SET stok = $sisa_stok WHERE id_masakan = $tahu";
+            $query_kelola_stok = "UPDATE stok_menu SET jumlah_terjual = $tempe WHERE id_pesan = $id_pesan";
+            mysqli_query($conn, $query_kelola_stok);
+            mysqli_query($conn, $query_kurangi_stok);
+            mysqli_query($conn, $query_proses_ubah);
+        }
+        if ($sql_simpan_order) {
+            header('location: entri_order.php');
+        }
+    }
+    ?>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (digunakan untuk perhitungan sederhana) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // Fungsi untuk menghitung total harga keranjang secara dinamis
+    function hitungTotal() {
+      var total = 0;
+      $("tr.cart-item").each(function(){
+        var harga = parseFloat($(this).find("input[id^='harga']").val()) || 0;
+        var jumlah = parseFloat($(this).find("input[type='number']").val()) || 0;
+        total += harga * jumlah;
+      });
+      $("#total_harga").text(total.toLocaleString());
+      $("#tot").val(total);
+    }
+    $("input[type='number']").on("input", hitungTotal);
+  </script>
 </body>
-
 </html>
-
 <?php
-// Menutup koneksi
-mysqli_close($conn);
+ob_flush();
 ?>

@@ -1,31 +1,73 @@
-<!DOCTYPE html>
 <?php
 include "connection/koneksi.php";
 session_start();
 ob_start();
 
-$id = $_SESSION['id_user'];
-
-if (isset($_SESSION['edit_order'])) {
-    unset($_SESSION['edit_order']);
+// Pastikan user sudah login
+if (!isset($_SESSION['username'])) {
+    header('location: logout.php');
+    exit();
 }
 
-if (isset($_SESSION['username'])) {
-    $query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
-    $sql = mysqli_query($conn, $query);
+$id = $_SESSION['id_user'];
 
-    while ($r = mysqli_fetch_array($sql)) {
-        $nama_user = $r['nama_user'];
-        $uang = 0;
+// Ambil data user dan level
+$query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
+$sql = mysqli_query($conn, $query);
+if (!$sql) {
+    die("Query error: " . mysqli_error($conn));
+}
+$user = mysqli_fetch_array($sql);
+$nama_user = $user['nama_user'];
+$user_level = $user['id_level'];
+
+// Inisialisasi variabel untuk perhitungan pendapatan dan untuk chart
+$uang = 0;
+$labels = [];
+$data_revenue = [];
+
+// Ambil data menu dari tabel masakan
+$query_lihat_menu = "SELECT * FROM masakan";
+$sql_lihat_menu = mysqli_query($conn, $query_lihat_menu);
+if (!$sql_lihat_menu) {
+    die("Query error: " . mysqli_error($conn));
+}
+
+// Loop untuk mengambil data pendapatan tiap menu
+while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
+    $id_masakan = $r_lihat_menu['id_masakan'];
+    
+    // Query untuk menghitung jumlah terjual dan total pendapatan tiap menu
+    $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
+                     FROM stok_menu 
+                     LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
+                     WHERE id_masakan = $id_masakan AND status_cetak = 'belum cetak'";
+    $sql_jumlah = mysqli_query($conn, $query_jumlah);
+    if (!$sql_jumlah) {
+        die("Query error: " . mysqli_error($conn));
+    }
+    $result_jumlah = mysqli_fetch_array($sql_jumlah);
+    $jml = $result_jumlah['jumlah_terjual'] ?? 0;
+    $total_pendapatan = $jml * $r_lihat_menu['harga'];
+    $uang += $total_pendapatan;
+    
+    // Simpan data untuk chart
+    $labels[] = $r_lihat_menu['nama_masakan'];
+    $data_revenue[] = $total_pendapatan;
+}
 ?>
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Entri Transaksi</title>
     <meta charset="UTF-8">
+    <title>Entri Transaksi & Laporan Penjualan</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -39,35 +81,39 @@ if (isset($_SESSION['username'])) {
             color: #fff;
             position: fixed;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-            transform: translateX(0);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
         }
         .sidebar.closed {
             transform: translateX(-100%);
         }
         .sidebar h3 {
             text-align: center;
-            margin-top: 80px; /* Tambahkan margin atas untuk menghindari tombol menu */
+            margin-top: 80px;
             margin-bottom: 40px;
             color: #17a2b8;
         }
-
-        .sidebar a {
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin-bottom: 10px;
+        }
+        .sidebar ul li a {
             display: flex;
             align-items: center;
             padding: 12px 15px;
-            margin-bottom: 10px;
             color: #adb5bd;
-            text-decoration: none;  
+            text-decoration: none;
             border-radius: 5px;
             transition: background 0.3s ease, color 0.3s ease;
         }
-        .sidebar a:hover {
+        .sidebar ul li a:hover {
             background: #17a2b8;
             color: #fff;
         }
-        .sidebar a i {
+        .sidebar ul li a i {
             margin-right: 10px;
         }
         .content {
@@ -89,125 +135,162 @@ if (isset($_SESSION['username'])) {
             border-radius: 5px;
             padding: 10px 15px;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        
     </style>
 </head>
 <body>
-    <!-- Toggle Button -->
+    <!-- Tombol Toggle Sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
-
+    
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <h3>Welcome, <?php echo htmlspecialchars($r['nama_user']); ?></h3>
+        <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
         <ul>
             <?php
-            if ($r['id_level'] == 1) { // Administrator
+            if ($user_level == 1) { // Administrator
+                echo '<li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>';
+                echo '<li><a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a></li>';
+                echo '<li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>';
+                echo '<li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>';
+                echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
+            } elseif ($user_level == 2) { // Waiter
+                echo '<li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>';
+                echo '<li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>';
+                echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
+            } elseif ($user_level == 3) { // Kasir
+                echo '<li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>';
+                echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
+            } elseif ($user_level == 4) { // Owner
+                echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
+            } 
             ?>
-                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-                <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
-                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-            <?php
-            } elseif ($r['id_level'] == 2) { // Waiter
-            ?>
-                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-            <?php
-            } elseif ($r['id_level'] == 3) { // Kasir
-            ?>
-                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-            <?php
-            } elseif ($r['id_level'] == 4) { // Owner
-            ?>
-                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-            <?php
-            } elseif ($r['id_level'] == 5) { // Pelanggan
-            ?>
-                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-            <?php
-            }
-            ?>
-            <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <li class="mt-3">
+                <a href="logout.php" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </li>
         </ul>
     </div>
-
-    <br><br><br>
+    
+    <!-- Konten Utama -->
     <div class="content" id="content">
-        <?php if ($r['id_level'] >= 1 && $r['id_level'] <= 4): ?>
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="m-0">Laporan Penjualan</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-hover table-bordered">
-                        <thead class="table-primary">
-                            <tr>
-                                <th>No.</th>
-                                <th>Nama Menu</th>
-                                <th>Sisa Stok</th>
-                                <th>Jumlah Terjual</th>
-                                <th>Harga</th>
-                                <th>Total Pendapatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $no = 1;
-                            $query_lihat_menu = "SELECT * FROM masakan";
-                            $sql_lihat_menu = mysqli_query($conn, $query_lihat_menu);
-
-                            while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
-                                $id_masakan = $r_lihat_menu['id_masakan'];
-                                $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
-                                                 FROM stok_menu 
-                                                 LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
-                                                 WHERE id_masakan = $id_masakan AND status_cetak = 'belum cetak'";
-                                $sql_jumlah = mysqli_query($conn, $query_jumlah);
-                                $result_jumlah = mysqli_fetch_array($sql_jumlah);
-
-                                $jml = $result_jumlah['jumlah_terjual'] ?? 0;
-                                $total_pendapatan = $jml * $r_lihat_menu['harga'];
-                                $uang += $total_pendapatan;
-                            ?>
-                            <tr>
-                                <td><?php echo $no++; ?></td>
-                                <td><?php echo $r_lihat_menu['nama_masakan']; ?></td>
-                                <td><?php echo $r_lihat_menu['stok']; ?></td>
-                                <td><?php echo $jml; ?></td>
-                                <td>Rp. <?php echo number_format($r_lihat_menu['harga'], 0, ',', '.'); ?></td>
-                                <td>Rp. <?php echo number_format($total_pendapatan, 0, ',', '.'); ?></td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="m-0">Laporan Penjualan</h5>
             </div>
-            <div class="mt-4">
-                <h4>Total Uang Masuk: Rp. <?php echo number_format($uang, 0, ',', '.'); ?> ,-</h4>
+            <div class="card-body">
+                <!-- Tabel Laporan Penjualan dengan DataTables -->
+                <table id="salesTable" class="table table-hover table-bordered">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Menu</th>
+                            <th>Sisa Stok</th>
+                            <th>Jumlah Terjual</th>
+                            <th>Harga</th>
+                            <th>Total Pendapatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Jalankan ulang query menu untuk tabel
+                        $query_lihat_menu = "SELECT * FROM masakan";
+                        $sql_lihat_menu = mysqli_query($conn, $query_lihat_menu);
+                        if (!$sql_lihat_menu) {
+                            die("Query error: " . mysqli_error($conn));
+                        }
+                        $no = 1;
+                        while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
+                            $id_masakan = $r_lihat_menu['id_masakan'];
+                            $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
+                                             FROM stok_menu 
+                                             LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
+                                             WHERE id_masakan = $id_masakan AND status_cetak = 'belum cetak'";
+                            $sql_jumlah = mysqli_query($conn, $query_jumlah);
+                            if (!$sql_jumlah) {
+                                die("Query error: " . mysqli_error($conn));
+                            }
+                            $result_jumlah = mysqli_fetch_array($sql_jumlah);
+                            $jml = $result_jumlah['jumlah_terjual'] ?? 0;
+                            $total_pendapatan = $jml * $r_lihat_menu['harga'];
+                        ?>
+                        <tr>
+                            <td><?php echo $no++; ?></td>
+                            <td><?php echo htmlspecialchars($r_lihat_menu['nama_masakan']); ?></td>
+                            <td><?php echo $r_lihat_menu['stok']; ?></td>
+                            <td><?php echo $jml; ?></td>
+                            <td>Rp. <?php echo number_format($r_lihat_menu['harga'], 0, ',', '.'); ?></td>
+                            <td>Rp. <?php echo number_format($total_pendapatan, 0, ',', '.'); ?></td>
+                        </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+                <h4 class="mt-3">Total Uang Masuk: Rp. <?php echo number_format($uang, 0, ',', '.'); ?> ,-</h4>
             </div>
-        <?php endif; ?>
+        </div>
+        
+        <!-- Grafik Pendapatan Per Menu -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="m-0">Grafik Pendapatan Per Menu</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" width="400" height="200"></canvas>
+            </div>
+        </div>
     </div>
-
+    
+    <!-- jQuery (untuk DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Toggle sidebar dengan animasi
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
             sidebar.classList.toggle('closed');
             content.classList.toggle('shifted');
         }
+        
+        // Inisialisasi DataTables
+        $(document).ready(function(){
+            $('#salesTable').DataTable();
+        });
+        
+        // Inisialisasi Chart.js untuk grafik pendapatan
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($labels); ?>,
+                datasets: [{
+                    label: 'Pendapatan (Rp)',
+                    data: <?php echo json_encode($data_revenue); ?>,
+                    backgroundColor: 'rgba(23, 162, 184, 0.5)',
+                    borderColor: 'rgba(23, 162, 184, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp. ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>
-<?php
-    }
-} else {
-    header('location: logout.php');
-}
-ob_flush();
-?>
+
+

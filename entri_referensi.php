@@ -23,15 +23,19 @@ if (isset($_SESSION['username'])) {
     <title>Entri Referensi</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Animate.css untuk animasi tambahan -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f1f5f9;
             overflow-x: hidden;
         }
-
+        /* Sidebar */
         .sidebar {
             height: 100vh;
             width: 280px;
@@ -43,18 +47,12 @@ if (isset($_SESSION['username'])) {
             transition: transform 0.3s ease;
             transform: translateX(0);
         }
-
-        .sidebar.closed {
-            transform: translateX(-100%);
-        }
-
         .sidebar h3 {
             text-align: center;
-            margin-top: 80px; /* To add space for menu button */
+            margin-top: 80px;
             margin-bottom: 40px;
             color: #17a2b8;
         }
-
         .sidebar a {
             display: flex;
             align-items: center;
@@ -65,31 +63,25 @@ if (isset($_SESSION['username'])) {
             border-radius: 5px;
             transition: background 0.3s ease, color 0.3s ease;
         }
-
         .sidebar a:hover {
             background: #17a2b8;
             color: #fff;
         }
-
         .sidebar a i {
             margin-right: 10px;
         }
-
+        /* Konten Utama */
         .content {
             margin-left: 300px;
             padding: 20px;
             transition: margin-left 0.3s ease;
         }
-
-        .content.shifted {
-            margin-left: 20px;
-        }
-
+        /* Tombol Toggle */
         .toggle-btn {
             position: fixed;
             top: 20px;
             left: 20px;
-            z-index: 1000;
+            z-index: 1100;
             background-color: #17a2b8;
             color: #fff;
             border: none;
@@ -98,107 +90,115 @@ if (isset($_SESSION['username'])) {
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
-
-        /* Content Styles */
-        .content {
-            margin-left: 300px;
-            padding: 30px;
-        }
-
-        /* Card Styles */
+        /* Tampilan Card */
         .card {
             border: none;
             border-radius: 10px;
             background: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-
         .card:hover {
             transform: scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
-
         .card img {
             width: 100%;
             height: 200px;
             object-fit: cover;
+            transition: transform 0.5s;
         }
-
-        .card-body {
-            padding: 20px;
-            text-align: center;
+        .card:hover img {
+            transform: scale(1.1);
         }
-
-        .btn {
-            font-size: 0.9rem;
-            padding: 10px 15px;
-            border-radius: 5px;
+        /* Favorite Button */
+        .favorite-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s, transform 0.3s;
         }
-
-        /* Responsive */
+        .favorite-btn.favorited {
+            color: red;
+            transform: scale(1.2);
+        }
         @media (max-width: 768px) {
             .sidebar {
                 width: 250px;
             }
-
             .content {
                 margin-left: 250px;
             }
         }
+        /* Aturan untuk sidebar tertutup */
+        .sidebar.closed {
+            transform: translateX(-280px);
+        }
+        /* Toast positioning */
+        #toastContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1200;
+        }
     </style>
 </head>
 <body>
-
-    <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+    <!-- Tombol toggle sidebar -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h3>Welcome, <?php echo htmlspecialchars($nama_user); ?></h3>
         <ul>
-        <?php
-        if ($user['id_level'] == 1) { // admin
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-            <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($user['id_level'] == 2) { // Level 2
-        ?>
-            <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($user['id_level'] == 3) { // Level 3
-        ?>
-            <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($user['id_level'] == 4) { // Level 4
-        ?>
-            <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-        <?php
-        } elseif ($user['id_level'] == 5) { // Level 5
-        ?>
-            <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-        <?php
-        }
-        ?>
-        <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </ul>
+            <?php if ($user['id_level'] == 1) { // admin ?>
+                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+                <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
+                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php } elseif ($user['id_level'] == 2) { ?>
+                <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
+                <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php } elseif ($user['id_level'] == 3) { ?>
+                <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
+            <?php } elseif ($user['id_level'] == 4) { ?>
+                <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
 
-  </div>
-    <!-- Content -->
-    <div class="content">
-        <h1 class="text-center mb-4">Menu Makanan</h1>
+            <?php } ?>
+            <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </ul>
+    </div>
+    
+    <!-- Konten Utama -->
+    <div class="content" id="content">
+        <h1 class="text-center mb-4 animate__animated animate__fadeInDown">Menu Makanan</h1>
+        
+        <!-- Sorting dan Pencarian -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <select id="sortMenu" class="form-select">
+                    <option value="default">Urutkan Berdasarkan</option>
+                    <option value="name-asc">Nama (A-Z)</option>
+                    <option value="price-asc">Harga (Rendah ke Tinggi)</option>
+                    <option value="price-desc">Harga (Tinggi ke Rendah)</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <input type="text" id="menuSearch" class="form-control" placeholder="Cari menu makanan..." />
+            </div>
+        </div>
+        
         <div class="text-end mb-3">
             <a href="tambah_menu.php" class="btn btn-primary">Tambah Data</a>
         </div>
-        <div class="row">
+        <div class="row" id="menuContainer">
             <?php
             $query_data_makanan = "SELECT * FROM masakan ORDER BY id_masakan DESC";
             $sql_data_makanan = mysqli_query($conn, $query_data_makanan);
-
             while ($makanan = mysqli_fetch_array($sql_data_makanan)) {
                 $id_masakan = $makanan['id_masakan'];
                 $nama_masakan = $makanan['nama_masakan'];
@@ -206,7 +206,7 @@ if (isset($_SESSION['username'])) {
                 $harga = $makanan['harga'];
                 $stok = $makanan['stok'];
             ?>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-4 mb-4 menu-item animate__animated animate__fadeInUp" data-name="<?php echo strtolower($nama_masakan); ?>" data-price="<?php echo $harga; ?>">
                 <div class="card">
                     <img src="gambar/<?php echo htmlspecialchars($gambar_masakan); ?>" alt="<?php echo htmlspecialchars($nama_masakan); ?>">
                     <div class="card-body">
@@ -215,57 +215,211 @@ if (isset($_SESSION['username'])) {
                             <strong>Harga:</strong> Rp. <?php echo number_format($harga); ?>,-<br>
                             <strong>Stok:</strong> <?php echo htmlspecialchars($stok); ?> Porsi
                         </p>
-                        <form action="" method="post">
-                            <button type="submit" name="edit_menu" value="<?php echo $id_masakan; ?>" class="btn btn-success btn-sm">Edit</button>
-                            <button type="submit" name="hapus_menu" value="<?php echo $id_masakan; ?>" class="btn btn-danger btn-sm">Hapus</button>
-                        </form>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="tambah_menu.php?edit=<?php echo $id_masakan; ?>" class="btn btn-success btn-sm" data-bs-toggle="tooltip" title="Edit Menu">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?php echo $id_masakan; ?>, '<?php echo htmlspecialchars($gambar_masakan); ?>')" data-bs-toggle="tooltip" title="Hapus Menu">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </div>
+                            <!-- Favorite Button -->
+                            <button class="favorite-btn" data-favorited="false" onclick="toggleFavorite(this)" data-bs-toggle="tooltip" title="Tambahkan ke Favorit">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <?php
-            }
-
-            if (isset($_POST['hapus_menu'])) {
-                $id_masakan = $_POST['hapus_menu'];
-
-                $query_lihat = "SELECT * FROM masakan WHERE id_masakan = $id_masakan";
-                $sql_lihat = mysqli_query($conn, $query_lihat);
-                $result_lihat = mysqli_fetch_array($sql_lihat);
-
-                if (file_exists('gambar/' . $result_lihat['gambar_masakan'])) {
-                    unlink('gambar/' . $result_lihat['gambar_masakan']);
-                }
-
-                $query_hapus_masakan = "DELETE FROM masakan WHERE id_masakan = $id_masakan";
-                mysqli_query($conn, $query_hapus_masakan);
-
-                header('location: entri_referensi.php');
-            }
-
-            if (isset($_POST['edit_menu'])) {
-                $_SESSION['edit_menu'] = $_POST['edit_menu'];
-                header('location: tambah_menu.php');
-            }
-            ?>
+            <?php } ?>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Modal Konfirmasi Hapus -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="deleteForm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Apakah anda yakin ingin menghapus menu ini?
+              <input type="hidden" name="hapus_menu" id="hapusMenuId" value="">
+              <input type="hidden" name="gambar_menu" id="gambarMenu" value="">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-danger">Hapus</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="favoriteToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            Status favorit diperbarui!
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+      <div id="deleteToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            Menu berhasil dihapus!
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Library Axios untuk AJAX (opsional, bisa pakai fetch juga) -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        // Toggle Sidebar dengan mengganti ikon tombol
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
             sidebar.classList.toggle('closed');
-            content.classList.toggle('shifted');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
+        }
+        
+        // Inisialisasi tooltips Bootstrap
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Fungsi untuk konfirmasi hapus
+        function confirmDelete(id, gambar) {
+            document.getElementById('hapusMenuId').value = id;
+            document.getElementById('gambarMenu').value = gambar;
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+        
+        // Proses penghapusan data menggunakan AJAX
+        document.getElementById('deleteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let id_masakan = document.getElementById('hapusMenuId').value;
+            let gambar = document.getElementById('gambarMenu').value;
+            axios.post('entri_referensi.php', new URLSearchParams({
+                hapus_menu: id_masakan,
+                gambar_menu: gambar
+            })).then(function(response) {
+                // Animasi penghilangan card
+                let card = document.querySelector(`[onclick="confirmDelete(${id_masakan}, '${gambar}')"]`).closest('.menu-item');
+                card.classList.add('animate__fadeOut');
+                setTimeout(() => { card.remove(); showDeleteToast(); }, 500);
+            }).catch(function(error) {
+                console.error(error);
+            });
+            // Tutup modal
+            var deleteModalEl = document.getElementById('deleteModal');
+            var modal = bootstrap.Modal.getInstance(deleteModalEl);
+            modal.hide();
+        });
+        
+        // Filter menu berdasarkan input pencarian
+        document.getElementById('menuSearch').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(function(item) {
+                let title = item.querySelector('.card-title').textContent.toLowerCase();
+                item.style.display = title.indexOf(filter) > -1 ? '' : 'none';
+            });
+        });
+        
+        // Sorting menu dengan animasi
+        document.getElementById('sortMenu').addEventListener('change', function() {
+            let sortValue = this.value;
+            let container = document.getElementById('menuContainer');
+            let items = Array.from(container.querySelectorAll('.menu-item'));
+
+            if (sortValue === 'name-asc') {
+                items.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+            } else if (sortValue === 'price-asc') {
+                items.sort((a, b) => parseFloat(a.dataset.price) - parseFloat(b.dataset.price));
+            } else if (sortValue === 'price-desc') {
+                items.sort((a, b) => parseFloat(b.dataset.price) - parseFloat(a.dataset.price));
+            } else {
+                // Default: kembalikan urutan semula
+                items.sort((a, b) => b.dataset.price - a.dataset.price);
+            }
+            // Terapkan animasi saat mengurutkan
+            container.innerHTML = '';
+            items.forEach(item => {
+                item.classList.add('animate__fadeInUp');
+                container.appendChild(item);
+            });
+        });
+        
+        // Toggle favorite button dan tampilkan toast
+        function toggleFavorite(btn) {
+            let favorited = btn.getAttribute('data-favorited') === 'true';
+            if (favorited) {
+                btn.setAttribute('data-favorited', 'false');
+                btn.innerHTML = '<i class="far fa-heart"></i>';
+                btn.classList.remove('favorited');
+            } else {
+                btn.setAttribute('data-favorited', 'true');
+                btn.innerHTML = '<i class="fas fa-heart"></i>';
+                btn.classList.add('favorited');
+            }
+            showFavoriteToast();
+        }
+        
+        // Fungsi untuk menampilkan toast notifikasi favorit
+        function showFavoriteToast() {
+            var toastEl = document.getElementById('favoriteToast');
+            var toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+        
+        // Fungsi untuk menampilkan toast notifikasi hapus
+        function showDeleteToast() {
+            var toastEl = document.getElementById('deleteToast');
+            var toast = new bootstrap.Toast(toastEl);
+            toast.show();
         }
     </script>
+    
+    <?php
+    // Proses penghapusan data jika request POST (fallback jika JavaScript tidak aktif)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus_menu'])) {
+        $id_masakan = $_POST['hapus_menu'];
+        $gambar = $_POST['gambar_menu'];
+        $query_lihat = "SELECT * FROM masakan WHERE id_masakan = $id_masakan";
+        $sql_lihat = mysqli_query($conn, $query_lihat);
+        $result_lihat = mysqli_fetch_array($sql_lihat);
+        if ($gambar && file_exists('gambar/' . $gambar)) {
+            unlink('gambar/' . $gambar);
+        }
+        $query_hapus_masakan = "DELETE FROM masakan WHERE id_masakan = $id_masakan";
+        mysqli_query($conn, $query_hapus_masakan);
+        // Untuk AJAX, response tidak mengarahkan ulang halaman
+        if(isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+            echo "success";
+            exit();
+        }
+        header('Location: entri_referensi.php');
+        exit();
+    }
+    ?>
 </body>
 </html>
 <?php
     }
 } else {
-    header('location: logout.php');
+    header('Location: logout.php');
 }
 ob_flush();
 ?>

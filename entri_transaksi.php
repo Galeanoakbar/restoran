@@ -217,43 +217,33 @@ body {
     <!-- Toggle Button -->
   <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-      <h3>Welcome, <?php echo htmlspecialchars($r['nama_user']); ?></h3>
-      <ul>
-          <?php
-          if ($r['id_level'] == 1) { // Administrator = 1
-          ?>
-              <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-              <a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a>
-              <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-              <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-              <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-          <?php
-          } elseif ($r['id_level'] == 2) { // Waiter = 2
-          ?>
-              <a href="beranda.php"><i class="fas fa-home"></i> Beranda</a>
-              <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-              <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-          <?php
-          } elseif ($r['id_level'] == 3) { // Kasir = 3
-          ?>
-              <a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a>
-              <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-          <?php
-          } elseif ($r['id_level'] == 4) { // Owner = 4
-          ?>
-              <a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a>
-          <?php
-          } elseif ($r['id_level'] == 5) { // Pelanggan = 5
-          ?>
-              <a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a>
-          <?php
-          }
-          ?>
-          <a href="logout.php" class="btn btn-danger w-100 mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      </ul>
-  </div>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h3>Welcome, <?= htmlspecialchars($r['nama_user']); ?></h3>
+        <ul class="list-unstyled">
+            <?php if ($r['id_level'] == 1): // Administrator ?>
+                <li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="entri_referensi.php"><i class="fas fa-utensils"></i> Entri Referensi</a></li>
+                <li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>
+                <li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>
+                <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+            <?php elseif ($r['id_level'] == 2): // Waiter ?>
+                <li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>
+                <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+            <?php elseif ($r['id_level'] == 3): // Kasir ?>
+                <li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>
+                <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+            <?php elseif ($r['id_level'] == 4): // Owner ?>
+                <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+            <?php endif; ?>
+            <li class="mt-3">
+                <a href="logout.php" class="btn btn-danger w-100">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
 <br>
 <br>
   <!-- Main content -->
