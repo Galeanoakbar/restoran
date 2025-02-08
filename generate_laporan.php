@@ -141,7 +141,7 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
 </head>
 <body>
     <!-- Tombol Toggle Sidebar -->
-    <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -250,11 +250,21 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
     <script>
         // Toggle sidebar dengan animasi
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
-            sidebar.classList.toggle('closed');
-            content.classList.toggle('shifted');
-        }
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const toggleBtn = document.querySelector('.toggle-btn');
+        
+        sidebar.classList.toggle('closed');
+        content.classList.toggle('shifted');
+        
+        toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
+    }
+
+    // Inisialisasi tooltips Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
         
         // Inisialisasi DataTables
         $(document).ready(function(){

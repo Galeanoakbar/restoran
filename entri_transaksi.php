@@ -215,7 +215,7 @@ body {
 </head>
 <body>
     <!-- Toggle Button -->
-  <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+  <button class="toggle-btn" onclick="toggleSidebar()">☰ </button>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -378,12 +378,23 @@ body {
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
-            sidebar.classList.toggle('closed');
-            content.classList.toggle('shifted');
-        }
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const toggleBtn = document.querySelector('.toggle-btn');
+        
+        sidebar.classList.toggle('closed');
+        content.classList.toggle('shifted');
+        
+        toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
+    }
+
+    // Inisialisasi tooltips Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
     </script>
 
 </body>

@@ -32,8 +32,9 @@ foreach ($levels as $id_level => $level_name) {
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <!-- Penting untuk responsive -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beranda Modern</title>
+    <title>Beranda</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Font Awesome -->
@@ -44,7 +45,7 @@ foreach ($levels as $id_level => $level_name) {
             background-color: #f1f5f9;
             overflow-x: hidden;
         }
-        /* Sidebar styling */
+        /* Sidebar styling untuk desktop */
         .sidebar {
             height: 100vh;
             width: 280px;
@@ -55,6 +56,7 @@ foreach ($levels as $id_level => $level_name) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
         }
+        /* Untuk desktop, toggle dengan kelas "closed" */
         .sidebar.closed {
             transform: translateX(-100%);
         }
@@ -81,7 +83,7 @@ foreach ($levels as $id_level => $level_name) {
         .sidebar a i {
             margin-right: 10px;
         }
-        /* Content styling */
+        /* Content styling untuk desktop */
         .content {
             margin-left: 280px;
             padding: 20px;
@@ -111,11 +113,35 @@ foreach ($levels as $id_level => $level_name) {
             right: 20px;
             z-index: 1100;
         }
+        /* Media Query untuk tampilan mobile */
+        @media (max-width: 768px) {
+            /* Sidebar disembunyikan secara default */
+            .sidebar {
+                width: 250px;
+                transform: translateX(-250px);
+            }
+            /* Saat ditampilkan, gunakan kelas "open" */
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            /* Konten mengambil lebar penuh */
+            .content {
+                margin-left: 0;
+            }
+            /* Jika sidebar muncul, beri margin pada konten (opsional) */
+            .content.shifted {
+                margin-left: 250px;
+            }
+            /* Posisi tombol toggle disesuaikan */
+            .toggle-btn {
+                left: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Toggle Button -->
-    <button class="toggle-btn" onclick="toggleSidebar()">☰ Menu</button>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -169,7 +195,7 @@ foreach ($levels as $id_level => $level_name) {
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <!-- Tabel Data Pengguna -->
+                            <!-- Tabel Data Pengguna (dibungkus agar responsive) -->
                             <div class="col-md-8">
                                 <?php foreach ($levels as $id_level => $level_name):
                                     $query = "SELECT * FROM user WHERE id_level = $id_level";
@@ -180,47 +206,49 @@ foreach ($levels as $id_level => $level_name) {
                                             <h5>Data <?= $level_name; ?></h5>
                                         </div>
                                         <div class="card-body">
-                                            <table class="table table-bordered table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>No.</th>
-                                                        <th>Nama</th>
-                                                        <th>Username</th>
-                                                        <th>Status</th>
-                                                        <th>Aksi</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php $no = 1; while ($r_dt = mysqli_fetch_array($sql)): ?>
-                                                        <tr id="row-<?= $r_dt['id_user']; ?>">
-                                                            <td class="text-center"><?= $no++; ?>.</td>
-                                                            <td><?= $r_dt['nama_user']; ?></td>
-                                                            <td><?= $r_dt['username']; ?></td>
-                                                            <td>
-                                                                <span class="badge <?= $r_dt['status'] == 'aktif' ? 'bg-success' : 'bg-secondary'; ?>" id="status-<?= $r_dt['id_user']; ?>">
-                                                                    <?= $r_dt['status']; ?>
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <div class="btn-group" role="group">
-                                                                    <?php if ($r_dt['status'] == 'aktif'): ?>
-                                                                        <button class="btn btn-warning btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'nonaktif')">
-                                                                            <i class="fas fa-ban"></i> Nonaktifkan
-                                                                        </button>
-                                                                    <?php else: ?>
-                                                                        <button class="btn btn-success btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'aktif')">
-                                                                            <i class="fas fa-check-circle"></i> Aktifkan
-                                                                        </button>
-                                                                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $r_dt['id_user']; ?>)">
-                                                                            <i class="fas fa-trash-alt"></i> Hapus
-                                                                        </button>
-                                                                    <?php endif; ?>
-                                                                </div>
-                                                            </td>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No.</th>
+                                                            <th>Nama</th>
+                                                            <th>Username</th>
+                                                            <th>Status</th>
+                                                            <th>Aksi</th>
                                                         </tr>
-                                                    <?php endwhile; ?>
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php $no = 1; while ($r_dt = mysqli_fetch_array($sql)): ?>
+                                                            <tr id="row-<?= $r_dt['id_user']; ?>">
+                                                                <td class="text-center"><?= $no++; ?>.</td>
+                                                                <td><?= $r_dt['nama_user']; ?></td>
+                                                                <td><?= $r_dt['username']; ?></td>
+                                                                <td>
+                                                                    <span class="badge <?= $r_dt['status'] == 'aktif' ? 'bg-success' : 'bg-secondary'; ?>" id="status-<?= $r_dt['id_user']; ?>">
+                                                                        <?= $r_dt['status']; ?>
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="btn-group" role="group">
+                                                                        <?php if ($r_dt['status'] == 'aktif'): ?>
+                                                                            <button class="btn btn-warning btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'nonaktif')">
+                                                                                <i class="fas fa-ban"></i> Nonaktifkan
+                                                                            </button>
+                                                                        <?php else: ?>
+                                                                            <button class="btn btn-success btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'aktif')">
+                                                                                <i class="fas fa-check-circle"></i> Aktifkan
+                                                                            </button>
+                                                                            <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $r_dt['id_user']; ?>)">
+                                                                                <i class="fas fa-trash-alt"></i> Hapus
+                                                                            </button>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endwhile; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div><!-- .table-responsive -->
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -259,9 +287,26 @@ foreach ($levels as $id_level => $level_name) {
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
-            sidebar.classList.toggle('closed');
-            content.classList.toggle('shifted');
+            const toggleBtn = document.querySelector('.toggle-btn');
+
+            if (window.innerWidth < 768) {
+                // Untuk tampilan mobile, gunakan kelas "open"
+                sidebar.classList.toggle('open');
+                content.classList.toggle('shifted');
+                toggleBtn.innerHTML = sidebar.classList.contains('open') ? '✖' : '☰';
+            } else {
+                // Untuk desktop, gunakan kelas "closed"
+                sidebar.classList.toggle('closed');
+                content.classList.toggle('shifted');
+                toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
+            }
         }
+
+        // Inisialisasi tooltips Bootstrap
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
 
         // Fungsi untuk menampilkan toast notifikasi
         function showToast(message, type = 'success') {
@@ -292,7 +337,6 @@ foreach ($levels as $id_level => $level_name) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update tampilan status pada tabel
                     document.getElementById('status-' + id).textContent = newStatus;
                     document.getElementById('status-' + id).className = 'badge ' + (newStatus === 'aktif' ? 'bg-success' : 'bg-secondary');
                     showToast(data.message);
@@ -322,9 +366,8 @@ foreach ($levels as $id_level => $level_name) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Hapus baris dari tabel
                         const row = document.getElementById('row-' + deleteUserId);
-                        if(row) row.remove();
+                        if (row) row.remove();
                         showToast(data.message);
                     } else {
                         showToast(data.message, 'danger');
@@ -332,7 +375,6 @@ foreach ($levels as $id_level => $level_name) {
                 })
                 .catch(() => showToast('Terjadi kesalahan!', 'danger'))
                 .finally(() => {
-                    // Sembunyikan modal
                     const modalEl = document.getElementById('deleteModal');
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     modal.hide();
