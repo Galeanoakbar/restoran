@@ -30,162 +30,152 @@ if(isset ($_SESSION['username'])){
   <style>
 /* General styles */
 body {
-    font-family: 'Arial', sans-serif; /* Menetapkan font keluarga */
-    background-color: #f4f4f9; /* Warna latar belakang body */
-    margin: 0; /* Menghilangkan margin default */
-    padding: 0; /* Menghilangkan padding default */
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
 }
 
 /* Sidebar styles */
 .sidebar {
-    height: 100vh; /* Menyesuaikan tinggi sidebar agar memenuhi viewport */
-    width: 280px; /* Lebar sidebar */
-    background: #212529; /* Warna latar sidebar */
-    color: #fff; /* Warna teks di sidebar */
-    position: fixed; /* Memperbaiki posisi sidebar pada viewport */
-    padding: 20px; /* Padding dalam sidebar */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Memberikan efek bayangan pada sidebar */
-    transition: transform 0.3s ease; /* Efek animasi untuk pergerakan */
-    transform: translateX(0); /* Posisi default sidebar */
+    height: 100vh;
+    width: 280px;
+    background: #212529;
+    color: #fff;
+    position: fixed;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+    transform: translateX(0);
 }
 
 .sidebar.closed {
-    transform: translateX(-100%); /* Menyembunyikan sidebar keluar dari viewport */
+    transform: translateX(-100%);
 }
 
-/* Heading di sidebar */
 .sidebar h3 {
-    text-align: center; /* Menengahkan teks */
-    margin-top: 80px; /* Memberikan ruang atas */
-    margin-bottom: 40px; /* Memberikan ruang bawah */
-    color: #17a2b8; /* Warna teks */
+    text-align: center;
+    margin-top: 80px;
+    margin-bottom: 40px;
+    color: #17a2b8;
 }
 
-/* Link di sidebar */
 .sidebar a {
     display: flex;
     align-items: center;
-    padding: 12px 15px; /* Padding di dalam link */
-    margin-bottom: 10px; /* Memberikan ruang bawah antar link */
-    color: #adb5bd; /* Warna teks link */
-    text-decoration: none; /* Menghapus garis bawah */
-    border-radius: 5px; /* Membulatkan sudut */
-    transition: background 0.3s ease, color 0.3s ease; /* Efek transisi untuk hover */
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    color: #adb5bd;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Ketika hover di link sidebar */
 .sidebar a:hover {
-    background: #17a2b8; /* Warna latar hover */
-    color: #fff; /* Warna teks hover */
+    background: #17a2b8;
+    color: #fff;
 }
 
-/* Ikon pada link */
 .sidebar a i {
-    margin-right: 10px; /* Memberikan ruang antara ikon dan teks */
+    margin-right: 10px;
 }
 
 /* Main container dan layout */
 .container {
-    margin-left: 20px; /* Margin kiri untuk container supaya tidak tertutup sidebar */
-    padding: 20px; /* Padding di dalam container */
+    margin-left: 20px;
+    padding: 20px;
 }
 
 /* Konten utama */
 .content {
-    margin-left: 280px; /* Margin kiri agar konten sejajar dengan sidebar */
-    padding: 20px; /* Padding dalam konten */
-    transition: margin-left 0.3s ease; /* Efek transisi saat sidebar dibuka/tutup */
+    margin-left: 280px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
 }
 
-/* Ketika sidebar terbuka */
 .content.shifted {
-    margin-left: 100px; /* Menggeser konten agar terlihat di samping sidebar */
+    margin-left: 100px;
 }
 
 /* Tabel styling */
 .table {
-    width: 100%; /* Lebar tabel penuh */
-    border-collapse: collapse; /* Menghapus space antar sel */
-    margin-top: 20px; /* Memberikan ruang atas tabel */
-    background-color: #f4f4f9; /* Warna latar tabel */
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #f4f4f9;
 }
 
 .table th, .table td {
-    padding: 12px; /* Padding di dalam sel tabel */
-    text-align: center; /* Menengahkan teks di sel */
-    border-bottom: 1px solid #ddd; /* Garis bawah antar sel */
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
 }
 
 .table th {
-    background-color: #f4f4f9; /* Warna latar header tabel */
-    font-weight: bold; /* Huruf tebal pada header tabel */
+    background-color: #f4f4f9;
+    font-weight: bold;
 }
 
 .table td {
-    background-color: #fff; /* Warna latar sel tabel */
+    background-color: #fff;
 }
 
 .table tr:hover {
-    background-color: #f1f1f1; /* Warna latar sel saat hover */
+    background-color: #f1f1f1;
 }
 
 /* Widget title */
 .widget-title {
-    background-color: #1a73e8; /* Warna latar widget */
-    color: white; /* Warna teks widget */
-    padding: 10px; /* Padding di dalam widget */
-    font-size: 18px; /* Ukuran teks */
-    border-radius: 8px 8px 0 0; /* Membulatkan sudut atas */
+    background-color: #1a73e8;
+    color: white;
+    padding: 10px;
+    font-size: 18px;
+    border-radius: 8px 8px 0 0;
 }
 
 /* Tombol styling */
 .btn {
-    padding: 8px 16px; /* Padding di dalam tombol */
-    font-size: 14px; /* Ukuran teks di tombol */
-    border-radius: 5px; /* Membulatkan sudut tombol */
-    cursor: pointer; /* Memberikan efek pointer saat hover */
-    transition: background-color 0.3s ease; /* Efek transisi untuk hover */
-    border: none; /* Menghilangkan border tombol */
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
 }
 
-/* Tombol sukses */
 .btn-success {
-    background-color: #4CAF50; /* Warna latar tombol sukses */
-    color: white; /* Warna teks tombol sukses */
+    background-color: #4CAF50;
+    color: white;
 }
 
-/* Hover pada tombol sukses */
 .btn-success:hover {
-    background-color: #45a049; /* Warna latar hover tombol sukses */
+    background-color: #45a049;
 }
 
-/* Tombol gagal */
 .btn-danger {
-    background-color: #f44336; /* Warna latar tombol gagal */
-    color: white; /* Warna teks tombol gagal */
+    background-color: #f44336;
+    color: white;
 }
 
-/* Hover pada tombol gagal */
 .btn-danger:hover {
-    background-color: #e53935; /* Warna latar hover tombol gagal */
+    background-color: #e53935;
 }
 
 /* Tombol untuk toggle sidebar */
 .toggle-btn {
-    position: fixed; /* Memperbaiki posisi tombol */
-    top: 20px; /* Posisi atas tombol */
-    left: 20px; /* Posisi kiri tombol */
-    z-index: 1000; /* Menjadikan tombol paling atas */
-    background-color: #17a2b8; /* Warna latar tombol */
-    color: #fff; /* Warna teks tombol */
-    border: none; /* Menghilangkan border tombol */
-    border-radius: 5px; /* Membulatkan sudut tombol */
-    padding: 10px 15px; /* Padding di dalam tombol */
-    cursor: pointer; /* Memberikan efek pointer saat hover */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Memberikan efek bayangan pada tombol */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background-color: #17a2b8;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Hover pada tombol toggle */
 .toggle-btn:hover {
     transform: scale(1.05);
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
@@ -194,23 +184,21 @@ body {
 /* Media query untuk perangkat kecil */
 @media (max-width: 768px) {
     .sidebar {
-        width: 200px; /* Lebar sidebar di perangkat kecil */
+        width: 200px;
     }
 
     .container {
-        margin-left: 0; /* Margin kiri konten saat sidebar ditutup di perangkat kecil */
+        margin-left: 0;
     }
 
     .content {
-        margin-left: 0; /* Margin kiri konten saat sidebar ditutup di perangkat kecil */
+        margin-left: 0;
     }
 
     .table {
-        margin-left: 0; /* Margin tabel supaya tetap sejajar */
+        margin-left: 0;
     }
 }
-
-
   </style>
 </head>
 <body>
@@ -228,7 +216,6 @@ body {
                 <li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 2): // Waiter ?>
-                <li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
                 <li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 3): // Kasir ?>
@@ -294,6 +281,18 @@ body {
 
                   if(isset($_REQUEST['hapus_order'])){
                     $id_order = $_REQUEST['hapus_order'];
+                    
+                    // Ambil data pesanan dari tb_pesan untuk mengembalikan stok
+                    $query_get_items = "select * from tb_pesan where id_order = $id_order";
+                    $sql_get_items = mysqli_query($conn, $query_get_items);
+                    while($item = mysqli_fetch_array($sql_get_items)){
+                        $id_masakan = $item['id_masakan'];
+                        $jumlah = $item['jumlah'];
+                        // Kembalikan stok: tambahkan kembali jumlah yang telah dipesan
+                        $query_update_stok = "update masakan set stok = stok + $jumlah where id_masakan = $id_masakan";
+                        mysqli_query($conn, $query_update_stok);
+                    }
+                    
                     $query_hapus_order = "delete from order_pesanan where id_order = $id_order";
                     $query_hapus_pesan_order = "delete from tb_pesan where id_order = $id_order";
                     $sql_hapus_order = mysqli_query($conn, $query_hapus_order);

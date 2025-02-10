@@ -11,7 +11,7 @@ if (!isset($_SESSION['username'])) {
 
 $id = $_SESSION['id_user'];
 
-// Tampilkan pesan edit_menu jika ada (gunakan print_r bila berupa array)
+// Tampilkan pesan edit_menu jika ada
 if (isset($_SESSION['edit_menu'])) {
     echo '<pre>';
     print_r($_SESSION['edit_menu']);
@@ -24,6 +24,71 @@ $query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
 $sql = mysqli_query($conn, $query);
 $r = mysqli_fetch_array($sql);
 $nama_user = $r['nama_user'];
+
+// Inisialisasi notifikasi (untuk pesan auto-dismiss)
+$notif = '';
+
+// PROSES FORM (hapus pesan & proses pesanan)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // Proses pesanan
+      if (isset($_POST['proses_pesan'])) {
+        // Cek apakah ada pesanan di keranjang
+        $query_check_order = "SELECT * FROM tb_pesan WHERE id_user = $id AND status_pesan != 'sudah'";
+        $sql_check_order = mysqli_query($conn, $query_check_order);
+        if (mysqli_num_rows($sql_check_order) == 0) {
+            $notif = "<div class='alert alert-danger' role='alert'>
+                        <strong>Error!</strong> Tidak ada pesanan. Silahkan pilih menu terlebih dahulu.
+                      </div>";
+        } else {
+            // Simpan order ke tabel order_pesanan
+            $id_admin = '';
+            $id_pengunjung = $id;
+            $no_meja = $_POST['no_meja'];
+            $total_harga = $_POST['total_harga'];
+            $uang_bayar = '';
+            $uang_kembali = '';
+            $status_order = 'belum bayar';
+
+            date_default_timezone_set('Asia/Jakarta');
+            $time = date('YmdHis');
+            $query_simpan_order = "INSERT INTO order_pesanan VALUES('', '$id_admin', '$id_pengunjung', $time, '$no_meja', '$total_harga', '$uang_bayar', '$uang_kembali', '$status_order')";
+            $sql_simpan_order = mysqli_query($conn, $query_simpan_order);
+
+            if ($sql_simpan_order) {
+                // Dapatkan id_order yang baru saja dibuat
+                $query_tampil_order = "SELECT * FROM order_pesanan WHERE id_pengunjung = $id ORDER BY id_order DESC LIMIT 1";
+                $sql_tampil_order = mysqli_query($conn, $query_tampil_order);
+                $result_tampil_order = mysqli_fetch_array($sql_tampil_order);
+                $id_ordernya = $result_tampil_order['id_order'];
+
+                // Update setiap pesanan di keranjang
+                $query_ubah_jumlah = "SELECT * FROM tb_pesan LEFT JOIN masakan ON tb_pesan.id_masakan = masakan.id_masakan WHERE id_user = $id AND status_pesan != 'sudah'";
+                $sql_ubah_jumlah = mysqli_query($conn, $query_ubah_jumlah);
+                while ($r_ubah_jumlah = mysqli_fetch_array($sql_ubah_jumlah)) {
+                    $id_masakan = $r_ubah_jumlah['id_masakan'];
+                    $jumlah_pesanan = $_POST['jumlah' . $id_masakan];
+                    $id_pesan = $r_ubah_jumlah['id_pesan'];
+                    // Cek stok terbaru
+                    $query_stok = "SELECT * FROM masakan WHERE id_masakan = $id_masakan";
+                    $sql_stok = mysqli_query($conn, $query_stok);
+                    $result_stok = mysqli_fetch_array($sql_stok);
+                    if ($jumlah_pesanan > $result_stok['stok']) {
+                        $jumlah_pesanan = $result_stok['stok'];
+                    }
+                    $sisa_stok = $result_stok['stok'] - $jumlah_pesanan;
+                    $query_proses_ubah = "UPDATE tb_pesan SET jumlah = $jumlah_pesanan, id_order = $id_ordernya WHERE id_masakan = $id_masakan AND id_user = $id AND status_pesan != 'sudah'";
+                    $query_kurangi_stok = "UPDATE masakan SET stok = $sisa_stok WHERE id_masakan = $id_masakan";
+                    $query_kelola_stok = "UPDATE stok_menu SET jumlah_terjual = $jumlah_pesanan WHERE id_pesan = $id_pesan";
+                    mysqli_query($conn, $query_kelola_stok);
+                    mysqli_query($conn, $query_kurangi_stok);
+                    mysqli_query($conn, $query_proses_ubah);
+                }
+                
+            }
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,19 +107,19 @@ $nama_user = $r['nama_user'];
       font-family: 'Open Sans', sans-serif;
     }
     /* Style untuk tombol toggle sidebar */
-        .toggle-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1100;
-            background-color: #17a2b8;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
+    .toggle-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1100;
+      background-color: #17a2b8;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
     /* Sidebar styling */
     .sidebar {
       height: 100vh;
@@ -148,7 +213,6 @@ $nama_user = $r['nama_user'];
                 <li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 2): // Waiter ?>
-                <li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
                 <li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 3): // Kasir ?>
@@ -156,6 +220,8 @@ $nama_user = $r['nama_user'];
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 4): // Owner ?>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+            <?php elseif ($r['id_level'] == 5): // Pelanggan ?>
+                <li><a href="entri_order.php"><i class="fas fa-print"></i> Entri Order</a></li>
             <?php endif; ?>
             <li class="mt-3">
                 <a href="logout.php" class="btn btn-danger w-100">
@@ -168,9 +234,27 @@ $nama_user = $r['nama_user'];
     <!-- Konten Halaman -->
     <div class="content">
       <div class="container my-4">
-        <!-- User Greeting -->
+        <!-- User Greeting & Notifikasi -->
         <div class="mb-4">
           <h2>Selamat Datang, <?php echo htmlspecialchars($nama_user); ?></h2>
+          <!-- Container notifikasi yang akan di-auto-dismiss -->
+          <div id="notif">
+            <?php if (!empty($notif)) { echo $notif; } ?>
+          </div>
+        </div>
+
+         <div class="row mb-3">
+            <div class="col-md-4">
+                <select id="sortMenu" class="form-select">
+                    <option value="default">Urutkan Berdasarkan</option>
+                    <option value="name-asc">Nama (A-Z)</option>
+                    <option value="price-asc">Harga (Rendah ke Tinggi)</option>
+                    <option value="price-desc">Harga (Tinggi ke Rendah)</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <input type="text" id="menuSearch" class="form-control" placeholder="Cari menu makanan..." />
+            </div>
         </div>
 
         <?php
@@ -185,7 +269,7 @@ $nama_user = $r['nama_user'];
         }
         if (in_array($id, $order)) {
         ?>
-          <!-- Tampilan jika order sudah ada -->
+          <!-- Tampilan jika order sudah ada (tidak di-auto-dismiss) -->
           <div class="alert alert-info" role="alert">
             <h4 class="alert-heading">Informasi Pesanan</h4>
             Terimakasih, Anda telah melakukan pemesanan. Silahkan tunggu pesanan tiba di meja saudara.
@@ -296,7 +380,9 @@ $nama_user = $r['nama_user'];
                   $query_olah_stok = "INSERT INTO stok_menu VALUES('', '$id_pesannya', '', 'belum cetak')";
                   $sql_olah_stok = mysqli_query($conn, $query_olah_stok);
                   if ($sql_tambah_pesan) {
-                      header('location: entri_order.php');
+                      $notif = "<div class='alert alert-success' role='alert'>
+                          <strong>Sukses!</strong> Menu telah ditambahkan ke keranjang.
+                      </div>";
                   }
               }
               ?>
@@ -330,10 +416,16 @@ $nama_user = $r['nama_user'];
                                 <td><?php echo htmlspecialchars($r_draft_pesan['nama_masakan']); ?></td>
                                 <td class="text-center">
                                   <div class="input-group">
-                                      <input type="number" name="jumlah<?php echo $r_draft_pesan['id_masakan']; ?>" id="jumlah<?php echo $r_draft_pesan['id_pesan']; ?>" 
-                                          value="1" min="1" class="form-control text-center" onchange="hitungTotal()">
+                                      <!-- Input jumlah dengan batas stok -->
+                                      <input type="number" 
+                                             name="jumlah<?php echo $r_draft_pesan['id_masakan']; ?>" 
+                                             id="jumlah<?php echo $r_draft_pesan['id_pesan']; ?>" 
+                                             value="1" 
+                                             min="1" 
+                                             max="<?php echo $r_draft_pesan['stok']; ?>" 
+                                             class="form-control text-center" 
+                                             onchange="hitungTotal()">
                                   </div>
-                                  <!-- Simpan harga sebagai input tersembunyi untuk perhitungan -->
                                   <input type="hidden" id="harga<?php echo $r_draft_pesan['id_pesan']; ?>" value="<?php echo $r_draft_pesan['harga']; ?>">
                                 </td>
                                 <td class="text-center">
@@ -343,7 +435,7 @@ $nama_user = $r['nama_user'];
                                 </td>
                             </tr>
                             <?php } ?>
-                            <!-- Input untuk nomor meja -->
+                            <!-- Input nomor meja -->
                             <tr>
                                 <td><strong>No. Meja</strong></td>
                                 <td colspan="2">
@@ -361,7 +453,6 @@ $nama_user = $r['nama_user'];
                             </tbody>
                         </table>
                         </div>
-                        <!-- Tombol proses pesanan yang lebih besar dan jelas -->
                         <div class="d-grid gap-2 mt-3">
                             <button type="submit" name="proses_pesan" class="btn btn-info btn-lg">
                               <i class="fas fa-share"></i> Proses Pesanan
@@ -374,67 +465,14 @@ $nama_user = $r['nama_user'];
           </div>
         <?php
         } // end if order aktif else
-
-        // Proses hapus pesan
-        if (isset($_POST['hapus_pesan'])) {
-            $id_pesan = $_POST['hapus_pesan'];
-            $query_hapus_pesan = "DELETE FROM tb_pesan WHERE id_pesan = $id_pesan";
-            $sql_hapus_pesan = mysqli_query($conn, $query_hapus_pesan);
-            if ($sql_hapus_pesan) {
-                header('location: entri_order.php');
-            }
-        }
-
-        // Proses order submission
-        if (isset($_POST['proses_pesan'])) {
-            $id_admin = '';
-            $id_pengunjung = $id;
-            $no_meja = $_POST['no_meja'];
-            $total_harga = $_POST['total_harga'];
-            $uang_bayar = '';
-            $uang_kembali = '';
-            $status_order = 'belum bayar';
-
-            date_default_timezone_set('Asia/Jakarta');
-            $time = date('YmdHis');
-            $query_simpan_order = "INSERT INTO order_pesanan VALUES('', '$id_admin', '$id_pengunjung', $time, '$no_meja', '$total_harga', '$uang_bayar', '$uang_kembali', '$status_order')";
-            $sql_simpan_order = mysqli_query($conn, $query_simpan_order);
-
-            $query_tampil_order = "SELECT * FROM order_pesanan WHERE id_pengunjung = $id ORDER BY id_order DESC LIMIT 1";
-            $sql_tampil_order = mysqli_query($conn, $query_tampil_order);
-            $result_tampil_order = mysqli_fetch_array($sql_tampil_order);
-            $id_ordernya = $result_tampil_order['id_order'];
-
-            $query_ubah_jumlah = "SELECT * FROM tb_pesan LEFT JOIN masakan ON tb_pesan.id_masakan = masakan.id_masakan WHERE id_user = $id AND status_pesan != 'sudah'";
-            $sql_ubah_jumlah = mysqli_query($conn, $query_ubah_jumlah);
-            while ($r_ubah_jumlah = mysqli_fetch_array($sql_ubah_jumlah)) {
-                $tahu = $r_ubah_jumlah['id_masakan'];
-                $tempe = $_POST['jumlah' . $tahu];
-                $id_pesan = $r_ubah_jumlah['id_pesan'];
-                $query_stok = "SELECT * FROM masakan WHERE id_masakan = $tahu";
-                $sql_stok = mysqli_query($conn, $query_stok);
-                $result_stok = mysqli_fetch_array($sql_stok);
-                $sisa_stok = $result_stok['stok'] - $tempe;
-                $query_proses_ubah = "UPDATE tb_pesan SET jumlah = $tempe, id_order = $id_ordernya WHERE id_masakan = $tahu AND id_user = $id AND status_pesan != 'sudah'";
-                $query_kurangi_stok = "UPDATE masakan SET stok = $sisa_stok WHERE id_masakan = $tahu";
-                $query_kelola_stok = "UPDATE stok_menu SET jumlah_terjual = $tempe WHERE id_pesan = $id_pesan";
-                mysqli_query($conn, $query_kelola_stok);
-                mysqli_query($conn, $query_kurangi_stok);
-                mysqli_query($conn, $query_proses_ubah);
-            }
-            if ($sql_simpan_order) {
-                header('location: entri_order.php');
-            }
-        }
         ?>
       </div>
     </div>
 
   <!-- Bootstrap 5 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- jQuery untuk perhitungan sederhana (jika diperlukan) -->
+  <!-- jQuery untuk perhitungan dinamis dan auto-dismiss notifikasi -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Script untuk interaktivitas sidebar dan perhitungan total harga -->
   <script>
         // Toggle Sidebar dengan mengganti ikon tombol
         function toggleSidebar() {
@@ -444,23 +482,27 @@ $nama_user = $r['nama_user'];
             toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
         }
         
-        // Inisialisasi tooltips Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl);
+        // Hitung total harga secara dinamis
+        function hitungTotal() {
+          var total = 0;
+          $("tr.cart-item").each(function(){
+            var harga = parseFloat($(this).find("input[id^='harga']").val()) || 0;
+            var jumlah = parseFloat($(this).find("input[type='number']").val()) || 0;
+            total += harga * jumlah;
+          });
+          $("#total_harga").text(total.toLocaleString());
+          $("#tot").val(total);
+        }
+        $("input[type='number']").on("input", hitungTotal);
+        
+        // Auto-dismiss notifikasi hanya untuk pesan di dalam container 
+        $(document).ready(function(){
+            setTimeout(function(){
+                $("#notif .alert").fadeOut("slow", function(){
+                    $(this).remove();
+                });
+            }, 2000); // 1000ms = 1 detik
         });
-    // Fungsi untuk menghitung total harga keranjang secara dinamis
-    function hitungTotal() {
-      var total = 0;
-      $("tr.cart-item").each(function(){
-        var harga = parseFloat($(this).find("input[id^='harga']").val()) || 0;
-        var jumlah = parseFloat($(this).find("input[type='number']").val()) || 0;
-        total += harga * jumlah;
-      });
-      $("#total_harga").text(total.toLocaleString());
-      $("#tot").val(total);
-    }
-    $("input[type='number']").on("input", hitungTotal);
   </script>
 </body>
 </html>

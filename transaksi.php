@@ -49,7 +49,7 @@ if (isset($_SESSION['username'])) {
 <body>
 <div class="container my-4">
     <div class="row">
-        <?php if ($r['id_level'] == 1) {
+        <?php if($r['id_level'] == 1 || $r['id_level'] == 3){
             $id_order = $_SESSION['edit_order'];
             $query_pemesan = "SELECT * FROM order_pesanan LEFT JOIN user ON order_pesanan.id_pengunjung = user.id_user WHERE id_order = $id_order";
             $sql_pemesan = mysqli_query($conn, $query_pemesan);

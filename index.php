@@ -1,5 +1,5 @@
 <?php
-ob_start(); // Memulai output buffering
+ob_start();
 include "connection/koneksi.php";
 session_start();
 
@@ -12,113 +12,104 @@ if (isset($_SESSION['username'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Login</title>
+    <title>Login - Minimalist</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="template/masuk/vendor/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="template/masuk/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap CSS untuk layout dasar -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font Awesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <!-- Google Fonts untuk tipografi modern -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: "Poppins", sans-serif;
-            margin: 0;
-            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: #f7f7f7;
             display: flex;
-            justify-content: center;
             align-items: center;
-            background: radial-gradient(circle, #6A11CB, #2575FC);
-            overflow: hidden;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        .container-login100 {
-            width: 400px;
-            padding: 30px;
+        .login-container {
             background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 360px;
         }
         .login-header {
             text-align: center;
+            margin-bottom: 30px;
             font-size: 24px;
-            font-weight: bold;
-            color: #2575FC;
-            margin-bottom: 20px;
+            font-weight: 600;
+            color: #333;
         }
-        .input100 {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
+        .form-control {
+            height: 45px;
             border: 1px solid #ddd;
-            border-radius: 10px;
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
             font-size: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
-        .input100:focus {
-            border-color: #2575FC;
-            box-shadow: 0 4px 12px rgba(37, 117, 252, 0.5);
+        .form-control:focus {
+            border-color: #6A11CB;
+            box-shadow: 0 0 8px rgba(106, 17, 203, 0.3);
             outline: none;
         }
-        .login100-form-btn {
-            width: 100%;
-            padding: 12px;
+        .btn-login {
+            background: #6A11CB;
             border: none;
-            border-radius: 10px;
-            background: linear-gradient(to right, #6A11CB, #2575FC);
+            border-radius: 8px;
+            padding: 12px;
             color: #fff;
             font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            width: 100%;
+            transition: background 0.3s;
         }
-        .login100-form-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(37, 117, 252, 0.5);
-        }
-        .link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .link a {
-            color: #2575FC;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s ease;
-        }
-        .link a:hover {
-            color: #6A11CB;
+        .btn-login:hover {
+            background: #2575FC;
         }
         .social-icons {
             display: flex;
             justify-content: center;
-            margin-top: 15px;
+            margin: 20px 0;
         }
         .social-icons a {
-            margin: 0 10px;
+            color: #6A11CB;
             font-size: 20px;
-            color: #2575FC;
-            transition: all 0.3s ease;
+            margin: 0 10px;
+            transition: color 0.3s;
         }
         .social-icons a:hover {
-            color: #6A11CB;
-            transform: scale(1.2);
+            color: #2575FC;
         }
-        footer {
+        .create-account {
             text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #999;
+            font-size: 14px;
+        }
+        .create-account a {
+            color: #6A11CB;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .create-account a:hover {
+            text-decoration: underline;
         }
         .alert-danger {
             background: #ffe5e5;
             color: #d9534f;
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 6px;
             text-align: center;
             margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-<div class="container-login100">
+<div class="login-container">
     <div class="login-header">Login</div>
     <form action="" method="post">
         <?php if (isset($_SESSION['error'])): ?>
@@ -127,22 +118,22 @@ if (isset($_SESSION['username'])) {
             </div>
             <?php unset($_SESSION['error']); ?>
         <?php endif; ?>
-
-        <input class="input100" type="text" name="username" placeholder="Username" required>
-        <input class="input100" type="password" name="password" placeholder="Password" required>
-        <button type="submit" name="login" class="login100-form-btn">Login</button>
-
+        <input type="text" name="username" class="form-control" placeholder="Username" required autofocus>
+        <input type="password" name="password" class="form-control" placeholder="Password" required>
+        <button type="submit" name="login" class="btn btn-login">Login</button>
         <div class="social-icons">
-            <a href="#" title="Login with Facebook"><i class="fa fa-facebook"></i></a>
-            <a href="#" title="Login with Google"><i class="fa fa-google"></i></a>
-            <a href="#" title="Login with Twitter"><i class="fa fa-twitter"></i></a>
+            <a href="#" title="Login with Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="#" title="Login with Google"><i class="fab fa-google"></i></a>
+            <a href="#" title="Login with Twitter"><i class="fab fa-twitter"></i></a>
         </div>
-
-        <div class="link">
+        <div class="create-account">
             <a href="daftar.php">Create new account</a>
         </div>
     </form>
 </div>
+<!-- jQuery dan Bootstrap JS untuk interaktivitas dasar -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <?php
 if (isset($_POST['login'])) {
@@ -167,8 +158,10 @@ if (isset($_POST['login'])) {
             // Redirect berdasarkan level pengguna
             switch ($user['id_level']) {
                 case 1:
-                case 2:
                     header('location: beranda.php');
+                    break;
+                case 2:
+                    header('location: entri_order.php');
                     break;
                 case 3:
                     header('location: entri_transaksi.php');

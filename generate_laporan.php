@@ -21,7 +21,7 @@ $user = mysqli_fetch_array($sql);
 $nama_user = $user['nama_user'];
 $user_level = $user['id_level'];
 
-// Inisialisasi variabel untuk perhitungan pendapatan dan untuk chart
+// Inisialisasi variabel pendapatan dan data chart
 $uang = 0;
 $labels = [];
 $data_revenue = [];
@@ -33,11 +33,10 @@ if (!$sql_lihat_menu) {
     die("Query error: " . mysqli_error($conn));
 }
 
-// Loop untuk mengambil data pendapatan tiap menu
+// Hitung pendapatan per menu
 while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
     $id_masakan = $r_lihat_menu['id_masakan'];
     
-    // Query untuk menghitung jumlah terjual dan total pendapatan tiap menu
     $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
                      FROM stok_menu 
                      LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
@@ -51,7 +50,6 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
     $total_pendapatan = $jml * $r_lihat_menu['harga'];
     $uang += $total_pendapatan;
     
-    // Simpan data untuk chart
     $labels[] = $r_lihat_menu['nama_masakan'];
     $data_revenue[] = $total_pendapatan;
 }
@@ -60,7 +58,7 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Entri Transaksi & Laporan Penjualan</title>
+    <title>Laporan Penjualan - Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -155,7 +153,6 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
                 echo '<li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>';
                 echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
             } elseif ($user_level == 2) { // Waiter
-                echo '<li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>';
                 echo '<li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>';
                 echo '<li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>';
             } elseif ($user_level == 3) { // Kasir
@@ -173,98 +170,102 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
     
     <!-- Konten Utama -->
     <div class="content" id="content">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="m-0">Laporan Penjualan</h5>
-            </div>
-            <div class="card-body">
-                <!-- Tabel Laporan Penjualan dengan DataTables -->
-                <table id="salesTable" class="table table-hover table-bordered">
-                    <thead class="table-primary">
-                        <tr>
-                            <th>No.</th>
-                            <th>Nama Menu</th>
-                            <th>Sisa Stok</th>
-                            <th>Jumlah Terjual</th>
-                            <th>Harga</th>
-                            <th>Total Pendapatan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // Jalankan ulang query menu untuk tabel
-                        $query_lihat_menu = "SELECT * FROM masakan";
-                        $sql_lihat_menu = mysqli_query($conn, $query_lihat_menu);
-                        if (!$sql_lihat_menu) {
-                            die("Query error: " . mysqli_error($conn));
-                        }
-                        $no = 1;
-                        while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
-                            $id_masakan = $r_lihat_menu['id_masakan'];
-                            $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
-                                             FROM stok_menu 
-                                             LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
-                                             WHERE id_masakan = $id_masakan AND status_cetak = 'belum cetak'";
-                            $sql_jumlah = mysqli_query($conn, $query_jumlah);
-                            if (!$sql_jumlah) {
-                                die("Query error: " . mysqli_error($conn));
-                            }
-                            $result_jumlah = mysqli_fetch_array($sql_jumlah);
-                            $jml = $result_jumlah['jumlah_terjual'] ?? 0;
-                            $total_pendapatan = $jml * $r_lihat_menu['harga'];
-                        ?>
-                        <tr>
-                            <td><?php echo $no++; ?></td>
-                            <td><?php echo htmlspecialchars($r_lihat_menu['nama_masakan']); ?></td>
-                            <td><?php echo $r_lihat_menu['stok']; ?></td>
-                            <td><?php echo $jml; ?></td>
-                            <td>Rp. <?php echo number_format($r_lihat_menu['harga'], 0, ',', '.'); ?></td>
-                            <td>Rp. <?php echo number_format($total_pendapatan, 0, ',', '.'); ?></td>
-                        </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-                <h4 class="mt-3">Total Uang Masuk: Rp. <?php echo number_format($uang, 0, ',', '.'); ?> ,-</h4>
-            </div>
-        </div>
-        
-        <!-- Grafik Pendapatan Per Menu -->
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="m-0">Grafik Pendapatan Per Menu</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="salesChart" width="400" height="200"></canvas>
+        <div class="container-fluid">
+            <h1 class="mt-4 mb-3">Laporan Penjualan</h1>
+            <div class="mb-4">
+                <h4>Total Uang Masuk: Rp. <?php echo number_format($uang, 0, ',', '.'); ?> ,-</h4>
+                <!-- Misalnya, tambahkan tombol download laporan jika perlu -->
+<a href="download_laporan.php" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Laporan
+    </a>            </div>
+            
+            <!-- Tab Navigasi untuk Grafik dan Tabel -->
+            <ul class="nav nav-tabs" id="reportTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart" type="button" role="tab" aria-controls="chart" aria-selected="true">
+                        Grafik Pendapatan
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table" type="button" role="tab" aria-controls="table" aria-selected="false">
+                        Tabel Penjualan
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="reportTabContent">
+                <!-- Tab Grafik -->
+                <div class="tab-pane fade show active p-4" id="chart" role="tabpanel" aria-labelledby="chart-tab">
+                    <canvas id="salesChart" style="max-height: 400px;"></canvas>
+                </div>
+                <!-- Tab Tabel -->
+                <div class="tab-pane fade p-4" id="table" role="tabpanel" aria-labelledby="table-tab">
+                    <div class="table-responsive">
+                        <table id="salesTable" class="table table-striped table-bordered">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Menu</th>
+                                    <th>Sisa Stok</th>
+                                    <th>Jumlah Terjual</th>
+                                    <th>Harga</th>
+                                    <th>Total Pendapatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                // Jalankan ulang query menu untuk tabel
+                                $query_lihat_menu = "SELECT * FROM masakan";
+                                $sql_lihat_menu = mysqli_query($conn, $query_lihat_menu);
+                                if (!$sql_lihat_menu) {
+                                    die("Query error: " . mysqli_error($conn));
+                                }
+                                $no = 1;
+                                while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
+                                    $id_masakan = $r_lihat_menu['id_masakan'];
+                                    $query_jumlah = "SELECT SUM(jumlah_terjual) AS jumlah_terjual 
+                                                     FROM stok_menu 
+                                                     LEFT JOIN tb_pesan ON stok_menu.id_pesan = tb_pesan.id_pesan 
+                                                     WHERE id_masakan = $id_masakan AND status_cetak = 'belum cetak'";
+                                    $sql_jumlah = mysqli_query($conn, $query_jumlah);
+                                    if (!$sql_jumlah) {
+                                        die("Query error: " . mysqli_error($conn));
+                                    }
+                                    $result_jumlah = mysqli_fetch_array($sql_jumlah);
+                                    $jml = $result_jumlah['jumlah_terjual'] ?? 0;
+                                    $total_pendapatan = $jml * $r_lihat_menu['harga'];
+                                ?>
+                                <tr>
+                                    <td><?php echo $no++; ?></td>
+                                    <td><?php echo htmlspecialchars($r_lihat_menu['nama_masakan']); ?></td>
+                                    <td><?php echo $r_lihat_menu['stok']; ?></td>
+                                    <td><?php echo $jml; ?></td>
+                                    <td>Rp. <?php echo number_format($r_lihat_menu['harga'], 0, ',', '.'); ?></td>
+                                    <td>Rp. <?php echo number_format($total_pendapatan, 0, ',', '.'); ?></td>
+                                </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- jQuery (untuk DataTables) -->
+    <!-- jQuery, Bootstrap JS, DataTables, dan Chart.js -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Toggle sidebar dengan animasi
         function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const content = document.getElementById('content');
-        const toggleBtn = document.querySelector('.toggle-btn');
-        
-        sidebar.classList.toggle('closed');
-        content.classList.toggle('shifted');
-        
-        toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
-    }
-
-    // Inisialisasi tooltips Bootstrap
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            sidebar.classList.toggle('closed');
+            content.classList.toggle('shifted');
+            toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
+        }
         
         // Inisialisasi DataTables
         $(document).ready(function(){
@@ -302,5 +303,3 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
     </script>
 </body>
 </html>
-
-

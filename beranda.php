@@ -3,16 +3,50 @@ include "connection/koneksi.php";
 session_start();
 ob_start();
 
+// Pastikan user sudah login
 if (!isset($_SESSION['username'])) {
     header('location: logout.php');
     exit;
 }
 
+// PROSES AKSI PENGGUNA (validasi, unvalidasi, hapus) melalui form submission
+if (isset($_POST['hapus_user'])) {
+    $id_user = $_POST['hapus_user'];
+    $query_hapus_user = "DELETE FROM user WHERE id_user = $id_user";
+    $sql_hapus_user = mysqli_query($conn, $query_hapus_user);
+    if ($sql_hapus_user) {
+        header('location: beranda.php');
+        exit;
+    }
+}
+
+if (isset($_POST['validasi'])) {
+    $id_user = $_POST['validasi'];
+    $query_validasi = "UPDATE user SET status = 'aktif' WHERE id_user = $id_user";
+    $sql_validasi = mysqli_query($conn, $query_validasi);
+    if ($sql_validasi) {
+        header('location: beranda.php');
+        exit;
+    }
+}
+
+if (isset($_POST['unvalidasi'])) {
+    $id_user = $_POST['unvalidasi'];
+    $query_unvalidasi = "UPDATE user SET status = 'nonaktif' WHERE id_user = $id_user";
+    $sql_unvalidasi = mysqli_query($conn, $query_unvalidasi);
+    if ($sql_unvalidasi) {
+        header('location: beranda.php');
+        exit;
+    }
+}
+
+// Ambil data user login
 $id = $_SESSION['id_user'];
 $query = "SELECT * FROM user NATURAL JOIN level WHERE id_user = $id";
 $sql = mysqli_query($conn, $query);
 $r = mysqli_fetch_array($sql);
 
+// Definisi level dan hitung status aktif per level
 $levels = [
     1 => "Administrator",
     2 => "Waiter",
@@ -56,7 +90,6 @@ foreach ($levels as $id_level => $level_name) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
         }
-        /* Untuk desktop, toggle dengan kelas "closed" */
         .sidebar.closed {
             transform: translateX(-100%);
         }
@@ -106,33 +139,21 @@ foreach ($levels as $id_level => $level_name) {
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        /* Style untuk toast notifikasi */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1100;
-        }
         /* Media Query untuk tampilan mobile */
         @media (max-width: 768px) {
-            /* Sidebar disembunyikan secara default */
             .sidebar {
                 width: 250px;
                 transform: translateX(-250px);
             }
-            /* Saat ditampilkan, gunakan kelas "open" */
             .sidebar.open {
                 transform: translateX(0);
             }
-            /* Konten mengambil lebar penuh */
             .content {
                 margin-left: 0;
             }
-            /* Jika sidebar muncul, beri margin pada konten (opsional) */
             .content.shifted {
                 margin-left: 250px;
             }
-            /* Posisi tombol toggle disesuaikan */
             .toggle-btn {
                 left: 10px;
             }
@@ -154,7 +175,6 @@ foreach ($levels as $id_level => $level_name) {
                 <li><a href="entri_transaksi.php"><i class="fas fa-money-bill"></i> Entri Transaksi</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 2): // Waiter ?>
-                <li><a href="beranda.php"><i class="fas fa-home"></i> Beranda</a></li>
                 <li><a href="entri_order.php"><i class="fas fa-shopping-cart"></i> Entri Order</a></li>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 3): // Kasir ?>
@@ -162,6 +182,7 @@ foreach ($levels as $id_level => $level_name) {
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
             <?php elseif ($r['id_level'] == 4): // Owner ?>
                 <li><a href="generate_laporan.php"><i class="fas fa-print"></i> Generate Laporan</a></li>
+
             <?php endif; ?>
             <li class="mt-3">
                 <a href="logout.php" class="btn btn-danger w-100">
@@ -170,9 +191,6 @@ foreach ($levels as $id_level => $level_name) {
             </li>
         </ul>
     </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Main Content -->
     <div class="content" id="content">
@@ -195,7 +213,7 @@ foreach ($levels as $id_level => $level_name) {
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <!-- Tabel Data Pengguna (dibungkus agar responsive) -->
+                            <!-- Tabel Data Pengguna -->
                             <div class="col-md-8">
                                 <?php foreach ($levels as $id_level => $level_name):
                                     $query = "SELECT * FROM user WHERE id_level = $id_level";
@@ -219,30 +237,31 @@ foreach ($levels as $id_level => $level_name) {
                                                     </thead>
                                                     <tbody>
                                                         <?php $no = 1; while ($r_dt = mysqli_fetch_array($sql)): ?>
-                                                            <tr id="row-<?= $r_dt['id_user']; ?>">
+                                                            <tr>
                                                                 <td class="text-center"><?= $no++; ?>.</td>
                                                                 <td><?= $r_dt['nama_user']; ?></td>
                                                                 <td><?= $r_dt['username']; ?></td>
                                                                 <td>
-                                                                    <span class="badge <?= $r_dt['status'] == 'aktif' ? 'bg-success' : 'bg-secondary'; ?>" id="status-<?= $r_dt['id_user']; ?>">
+                                                                    <span class="badge <?= $r_dt['status'] == 'aktif' ? 'bg-success' : 'bg-secondary'; ?>">
                                                                         <?= $r_dt['status']; ?>
                                                                     </span>
                                                                 </td>
                                                                 <td>
-                                                                    <div class="btn-group" role="group">
+                                                                    <!-- Form aksi untuk update status dan hapus -->
+                                                                    <form action="" method="post">
                                                                         <?php if ($r_dt['status'] == 'aktif'): ?>
-                                                                            <button class="btn btn-warning btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'nonaktif')">
+                                                                            <button type="submit" name="unvalidasi" value="<?= $r_dt['id_user']; ?>" class="btn btn-warning btn-sm">
                                                                                 <i class="fas fa-ban"></i> Nonaktifkan
                                                                             </button>
                                                                         <?php else: ?>
-                                                                            <button class="btn btn-success btn-sm" onclick="updateStatus(<?= $r_dt['id_user']; ?>, 'aktif')">
+                                                                            <button type="submit" name="validasi" value="<?= $r_dt['id_user']; ?>" class="btn btn-success btn-sm">
                                                                                 <i class="fas fa-check-circle"></i> Aktifkan
                                                                             </button>
-                                                                            <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $r_dt['id_user']; ?>)">
+                                                                            <button type="submit" name="hapus_user" value="<?= $r_dt['id_user']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
                                                                                 <i class="fas fa-trash-alt"></i> Hapus
                                                                             </button>
                                                                         <?php endif; ?>
-                                                                    </div>
+                                                                    </form>
                                                                 </td>
                                                             </tr>
                                                         <?php endwhile; ?>
@@ -260,127 +279,24 @@ foreach ($levels as $id_level => $level_name) {
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Hapus -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            Apakah Anda yakin ingin menghapus data ini?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-            <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Hapus</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Script untuk interaksi -->
+    <!-- Fungsi toggle sidebar -->
     <script>
-        // Toggle Sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
             const toggleBtn = document.querySelector('.toggle-btn');
-
             if (window.innerWidth < 768) {
-                // Untuk tampilan mobile, gunakan kelas "open"
                 sidebar.classList.toggle('open');
                 content.classList.toggle('shifted');
                 toggleBtn.innerHTML = sidebar.classList.contains('open') ? '✖' : '☰';
             } else {
-                // Untuk desktop, gunakan kelas "closed"
                 sidebar.classList.toggle('closed');
                 content.classList.toggle('shifted');
                 toggleBtn.innerHTML = sidebar.classList.contains('closed') ? '☰' : '✖';
             }
         }
-
-        // Inisialisasi tooltips Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Fungsi untuk menampilkan toast notifikasi
-        function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toastContainer');
-            const toastEl = document.createElement('div');
-            toastEl.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
-            toastEl.setAttribute('role', 'alert');
-            toastEl.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            `;
-            toastContainer.appendChild(toastEl);
-            setTimeout(() => {
-                toastEl.classList.remove('show');
-                setTimeout(() => { toastEl.remove(); }, 500);
-            }, 3000);
-        }
-
-        // Update status pengguna via AJAX (Fetch API)
-        function updateStatus(id, newStatus) {
-            fetch('action_user.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `action=update&user_id=${id}&status=${newStatus}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('status-' + id).textContent = newStatus;
-                    document.getElementById('status-' + id).className = 'badge ' + (newStatus === 'aktif' ? 'bg-success' : 'bg-secondary');
-                    showToast(data.message);
-                } else {
-                    showToast(data.message, 'danger');
-                }
-            })
-            .catch(() => showToast('Terjadi kesalahan!', 'danger'));
-        }
-
-        // Konfirmasi hapus data
-        let deleteUserId = null;
-        function confirmDelete(id) {
-            deleteUserId = id;
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            deleteModal.show();
-        }
-
-        // Setelah konfirmasi hapus
-        document.getElementById('deleteConfirmBtn').addEventListener('click', function() {
-            if (deleteUserId) {
-                fetch('action_user.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `action=delete&user_id=${deleteUserId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const row = document.getElementById('row-' + deleteUserId);
-                        if (row) row.remove();
-                        showToast(data.message);
-                    } else {
-                        showToast(data.message, 'danger');
-                    }
-                })
-                .catch(() => showToast('Terjadi kesalahan!', 'danger'))
-                .finally(() => {
-                    const modalEl = document.getElementById('deleteModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    modal.hide();
-                });
-            }
-        });
     </script>
 </body>
 </html>
