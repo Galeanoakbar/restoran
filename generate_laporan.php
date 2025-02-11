@@ -58,7 +58,7 @@ while ($r_lihat_menu = mysqli_fetch_array($sql_lihat_menu)) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Penjualan - Dashboard</title>
+    <title>Laporan Penjualan</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">

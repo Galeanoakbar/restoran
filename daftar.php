@@ -14,139 +14,105 @@ session_start();
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* Global Background & Font */
+    /* Background dark gradient */
     body {
-      background: linear-gradient(135deg,rgb(112, 63, 248),rgb(5, 5, 5));
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       background-size: cover;
       font-family: 'Roboto', sans-serif;
       height: 100vh;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    /* Dark overlay untuk mempertegas form */
-    body::before {
-      content: '';
+    /* Container untuk partikel */
+    #particles-js {
       position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 1;
+      top: 0;
+      left: 0;
+      z-index: 0;
     }
-    /* Container utama dengan efek glassmorphism */
+    /* Container form dengan animasi slide-in dan gerakan lembut */
     .registration-container {
       position: relative;
       z-index: 2;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-      display: flex;
-      max-width: 900px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      padding: 40px 30px;
       width: 100%;
-      overflow: hidden;
-      animation: fadeIn 1s ease-in-out;
+      max-width: 400px;
+      animation: slideIn 1s ease-out, moveForm 4s ease-in-out infinite;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    /* Info Section di sebelah kiri */
-    .info-section {
-      flex: 1;
-      background: linear-gradient(135deg, rgba(106,17,203,0.8), rgba(37,117,252,0.8));
-      color: #fff;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+    @keyframes moveForm {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+    h2 {
       text-align: center;
-    }
-    .info-section h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    .info-section p {
-      font-size: 1.1rem;
-    }
-    /* Form Section di sebelah kanan */
-    .form-section {
-      flex: 1;
-      padding: 40px;
-      background: rgba(255, 255, 255, 0.9);
-    }
-    .form-section h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-weight: 700;
       color: #333;
+      margin-bottom: 20px;
+      font-weight: 700;
     }
     .form-control {
-      border-radius: 50px;
-      padding: 15px 20px;
-      border: none;
-      margin-bottom: 20px;
-      background-color: #f1f1f1;
-      transition: background-color 0.3s, box-shadow 0.3s;
+      border-radius: 25px;
+      padding: 10px 20px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      transition: box-shadow 0.3s ease;
     }
     .form-control:focus {
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(106,17,203,0.4);
+      box-shadow: 0 0 8px rgba(30,144,255,0.5);
       outline: none;
     }
     .btn-custom {
       border: none;
-      border-radius: 50px;
-      padding: 15px 20px;
+      border-radius: 25px;
+      padding: 10px;
       width: 100%;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      background-color: #1e90ff;
       color: #fff;
       font-weight: bold;
-      transition: transform 0.3s, box-shadow 0.3s;
+      transition: background-color 0.3s, transform 0.3s;
     }
     .btn-custom:hover {
-      transform: scale(1.02);
-      box-shadow: 0 5px 15px rgba(37,117,252,0.4);
+      background-color: #187bcd;
+      transform: translateY(-2px);
+    }
+    .btn-custom:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
     }
     .form-footer {
       text-align: center;
-      margin-top: 15px;
+      margin-top: 10px;
       font-size: 0.9rem;
     }
     .form-footer a {
-      color: #6a11cb;
+      color: #1e90ff;
       text-decoration: none;
     }
     .form-footer a:hover {
       text-decoration: underline;
     }
-    @media (max-width: 768px) {
-      .registration-container {
-        flex-direction: column;
-      }
-      .info-section, .form-section {
-        padding: 20px;
-      }
-      .info-section {
-        display: none; /* Sembunyikan info section di layar kecil */
-      }
-    }
   </style>
 </head>
 <body>
-<div class="registration-container">
-  <!-- Info Section -->
-  <div class="info-section d-none d-md-flex">
-    <h2>Welcome Aboard!</h2>
-    <p>Join us and start your amazing journey. Sign up now and be part of our vibrant community.</p>
-  </div>
-  <!-- Form Section -->
-  <div class="form-section">
+  <!-- Container untuk efek partikel -->
+  <div id="particles-js"></div>
+  
+  <!-- Form Sign-Up -->
+  <div class="registration-container">
     <h2>Create Account</h2>
     <form action="" method="post">
       <input name="nama_user" type="text" class="form-control" placeholder="Full Name" required />
@@ -186,9 +152,41 @@ session_start();
       Already have an account? <a href="index.php">Sign In</a>
     </div>
   </div>
-</div>
-<!-- Bootstrap 5 JS Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- particles.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    /* Konfigurasi efek partikel */
+    particlesJS("particles-js", {
+      "particles": {
+        "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+        "color": { "value": "#ffffff" },
+        "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" } },
+        "opacity": { "value": 0.5, "random": false },
+        "size": { "value": 3, "random": true },
+        "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
+        "move": { "enable": true, "speed": 6, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": { "enable": true, "mode": "repulse" },
+          "onclick": { "enable": true, "mode": "push" },
+          "resize": true
+        },
+        "modes": {
+          "grab": { "distance": 400, "line_linked": { "opacity": 1 } },
+          "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 },
+          "repulse": { "distance": 200, "duration": 0.4 },
+          "push": { "particles_nb": 4 },
+          "remove": { "particles_nb": 2 }
+        }
+      },
+      "retina_detect": true
+    });
+  </script>
 </body>
 </html>
 <?php 

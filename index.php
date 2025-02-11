@@ -12,36 +12,52 @@ if (isset($_SESSION['username'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Login - Minimalist</title>
     <meta charset="UTF-8">
+    <title>Login - Minimalist</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap CSS untuk layout dasar -->
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Font Awesome untuk ikon -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    <!-- Google Fonts untuk tipografi modern -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet">
+    <!-- jQuery UI CSS untuk fitur draggable -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: #f7f7f7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             height: 100vh;
             margin: 0;
+            position: relative; /* Menghindari penggunaan flexbox agar draggable tidak terganggu */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .login-container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            width: 360px;
-        }
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            animation: slideIn 1s ease-out, moveForm 4s ease-in-out infinite;
+            }
+            @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes moveForm {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+            }
         .login-header {
             text-align: center;
             margin-bottom: 30px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
             color: #333;
         }
@@ -54,12 +70,12 @@ if (isset($_SESSION['username'])) {
             margin-bottom: 20px;
         }
         .form-control:focus {
-            border-color: #6A11CB;
+            border-color: #1e90ff;
             box-shadow: 0 0 8px rgba(106, 17, 203, 0.3);
             outline: none;
         }
         .btn-login {
-            background: #6A11CB;
+            background: #1e90ff;
             border: none;
             border-radius: 8px;
             padding: 12px;
@@ -78,7 +94,7 @@ if (isset($_SESSION['username'])) {
             margin: 20px 0;
         }
         .social-icons a {
-            color: #6A11CB;
+            color:#1e90ff;
             font-size: 20px;
             margin: 0 10px;
             transition: color 0.3s;
@@ -91,7 +107,7 @@ if (isset($_SESSION['username'])) {
             font-size: 14px;
         }
         .create-account a {
-            color: #6A11CB;
+            color: #1e90ff;
             text-decoration: none;
             font-weight: 500;
         }
@@ -106,9 +122,20 @@ if (isset($_SESSION['username'])) {
             text-align: center;
             margin-bottom: 20px;
         }
+        /* Container untuk partikel */
+        #particles-js {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        }
     </style>
 </head>
 <body>
+
+<div id="particles-js"></div>
+
 <div class="login-container">
     <div class="login-header">Login</div>
     <form action="" method="post">
@@ -131,10 +158,16 @@ if (isset($_SESSION['username'])) {
         </div>
     </form>
 </div>
-<!-- jQuery dan Bootstrap JS untuk interaktivitas dasar -->
+<!-- jQuery, jQuery UI, dan Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
+<script>
+    // Membuat login container dapat dipindahkan (draggable)
+    $(function() {
+        $(".login-container").draggable();
+    });
+</script>
 <?php
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
@@ -190,6 +223,39 @@ if (isset($_POST['login'])) {
 }
 ?>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- particles.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    /* Konfigurasi efek partikel */
+    particlesJS("particles-js", {
+      "particles": {
+        "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+        "color": { "value": "#ffffff" },
+        "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" } },
+        "opacity": { "value": 0.5, "random": false },
+        "size": { "value": 3, "random": true },
+        "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
+        "move": { "enable": true, "speed": 6, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": { "enable": true, "mode": "repulse" },
+          "onclick": { "enable": true, "mode": "push" },
+          "resize": true
+        },
+        "modes": {
+          "grab": { "distance": 400, "line_linked": { "opacity": 1 } },
+          "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 },
+          "repulse": { "distance": 200, "duration": 0.4 },
+          "push": { "particles_nb": 4 },
+          "remove": { "particles_nb": 2 }
+        }
+      },
+      "retina_detect": true
+    });
+  </script>
 </body>
 </html>
 <?php ob_end_flush(); ?>
